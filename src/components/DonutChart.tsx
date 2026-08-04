@@ -31,6 +31,8 @@ interface DonutChartProps {
   title: string
   data: Slice[]
   mode: 'usd' | 'count'
+  /** Optional blended credit inside the panel (bottom-right). */
+  credit?: string
 }
 
 /** Keep chart readable: top slices + Other */
@@ -43,12 +45,12 @@ function compactSlices(data: Slice[], limit = 7): Slice[] {
   return [...top, { name: 'Other', value: rest }]
 }
 
-export function DonutChart({ title, data, mode }: DonutChartProps) {
+export function DonutChart({ title, data, mode, credit }: DonutChartProps) {
   const slices = compactSlices(data)
   const total = data.reduce((s, d) => s + d.value, 0)
 
   return (
-    <div className="chart-panel donut-panel">
+    <div className={`chart-panel donut-panel${credit ? ' donut-panel--credit' : ''}`}>
       <div className="chart-panel__head">
         <h3>{title}</h3>
         <p>{mode === 'usd' ? 'Share of GGR USD' : 'Share of impressions'}</p>
@@ -104,6 +106,7 @@ export function DonutChart({ title, data, mode }: DonutChartProps) {
           })}
         </ul>
       </div>
+      {credit ? <p className="panel-credit">{credit}</p> : null}
     </div>
   )
 }

@@ -14,8 +14,10 @@ import { formatMonthLabel, formatNumber, formatUsd } from '../data/performanceDa
 
 interface TrendChartProps {
   data: MonthlyMetric[]
-  /** Focus month when zoomed (null = all months). */
+  /** Focus month when zoomed to an exact YYYY-MM (null otherwise). */
   zoomedMonth?: string | null
+  /** Subtitle when year and/or month filter is active. */
+  zoomLabel?: string | null
 }
 
 function axisLabel(month: string) {
@@ -28,8 +30,12 @@ function axisLabel(month: string) {
   return `${names[idx] ?? m} ${y.slice(2)}`
 }
 
-export function TrendChart({ data, zoomedMonth = null }: TrendChartProps) {
-  const zoomed = Boolean(zoomedMonth)
+export function TrendChart({
+  data,
+  zoomedMonth = null,
+  zoomLabel = null,
+}: TrendChartProps) {
+  const zoomed = Boolean(zoomLabel) || Boolean(zoomedMonth)
   const chartData = data.map((row) => ({
     ...row,
     label: axisLabel(row.month),
@@ -46,7 +52,7 @@ export function TrendChart({ data, zoomedMonth = null }: TrendChartProps) {
         <h3>Performance trend</h3>
         <p>
           {zoomed
-            ? `Zoomed around ${formatMonthLabel(zoomedMonth!)} (±5 months)`
+            ? `Zoomed · ${zoomLabel ?? formatMonthLabel(zoomedMonth!)}`
             : 'All months · Impressions · Clicks · GGR USD'}
         </p>
       </div>

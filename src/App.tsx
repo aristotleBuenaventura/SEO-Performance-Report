@@ -3,13 +3,16 @@ import type { BrandId, CurrencyCode } from './types'
 import {
   BRAND_TABS,
   DATA_SOURCE,
-  filterMonthly,
+  exactMonthKey,
+  filterByPeriod,
+  formatPeriodLabel,
   getBrandMonthly,
   getBrandTabsForCurrency,
-  getRevenueByBrand,
+  getRevenueByBrandPeriod,
   getTotals,
-  getTrafficByBrand,
-  zoomMonthlySeries,
+  getTrafficByBrandPeriod,
+  zoomByPeriod,
+  type PeriodFilter,
 } from './data/performanceData'
 import { FiltersBar } from './components/FiltersBar'
 import { KpiCards } from './components/KpiCards'
@@ -19,16 +22,21 @@ import { BrandNav } from './components/BrandNav'
 import './App.css'
 
 function App() {
+  const [year, setYear] = useState('all')
   const [month, setMonth] = useState('all')
   const [brand, setBrand] = useState<BrandId>('summary')
   const [currency, setCurrency] = useState<CurrencyCode | 'all'>('all')
+
+  const period: PeriodFilter = useMemo(
+    () => ({ year, month }),
+    [year, month],
+  )
 
   const visibleTabs = useMemo(
     () => getBrandTabsForCurrency(currency),
     [currency],
   )
 
-  // If active brand is hidden by currency filter, fall back to Summary
   useEffect(() => {
     if (!visibleTabs.some((t) => t.id === brand)) {
       setBrand('summary')
@@ -43,26 +51,28 @@ function App() {
   )
 
   const monthly = useMemo(
-    () => filterMonthly(chartSeries, month),
-    [chartSeries, month],
+    () => filterByPeriod(chartSeries, period),
+    [chartSeries, period],
   )
 
-  // Trend keeps a line: full series on "all", zoomed window around selected month
   const trendSeries = useMemo(
-    () => zoomMonthlySeries(chartSeries, month, 5),
-    [chartSeries, month],
+    () => zoomByPeriod(chartSeries, period, 5),
+    [chartSeries, period],
   )
 
   const totals = useMemo(() => getTotals(monthly), [monthly])
 
   const revenuePie = useMemo(
-    () => getRevenueByBrand(month, currency),
-    [month, currency],
+    () => getRevenueByBrandPeriod(period, currency),
+    [period, currency],
   )
   const trafficPie = useMemo(
-    () => getTrafficByBrand(month, currency),
-    [month, currency],
+    () => getTrafficByBrandPeriod(period, currency),
+    [period, currency],
   )
+
+  const focusMonth = exactMonthKey(period)
+  const isZoomed = !(year === 'all' && month === 'all')
 
   return (
     <div className="app-shell">
@@ -82,8 +92,10 @@ function App() {
         </div>
 
         <FiltersBar
+          year={year}
           month={month}
           currency={currency}
+          onYearChange={setYear}
           onMonthChange={setMonth}
           onCurrencyChange={setCurrency}
         />
@@ -113,10 +125,19 @@ function App() {
           />
 
           <div className="charts-grid">
-            <TrendChart data={trendSeries} zoomedMonth={month === 'all' ? null : month} />
+            <TrendChart
+              data={trendSeries}
+              zoomedMonth={focusMonth}
+              zoomLabel={isZoomed ? formatPeriodLabel(period) : null}
+            />
             <div className="side-charts">
               <DonutChart title="Revenue mix" data={revenuePie} mode="usd" />
-              <DonutChart title="Traffic mix" data={trafficPie} mode="count" />
+              <DonutChart
+                title="Traffic mix"
+                data={trafficPie}
+                mode="count"
+                credit="Developed by Aris"
+              />
             </div>
           </div>
         </main>

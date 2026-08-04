@@ -486,10 +486,6 @@
 
 /* ── Responsive ── */
 @media (max-width: 1100px) {
-  body {
-    overflow: auto;
-  }
-
   .app-shell {
     height: auto;
     max-height: none;
@@ -503,13 +499,14 @@
   }
 
   .brand-nav {
-    max-height: 220px;
+    max-height: none;
   }
 
   .brand-nav__list {
     flex-direction: row;
     flex-wrap: wrap;
     overflow: auto;
+    max-height: 140px;
   }
 
   .brand-nav__item {
@@ -523,52 +520,292 @@
 
   .charts-grid {
     grid-template-columns: 1fr;
-    min-height: 640px;
+    min-height: 0;
   }
 
   .side-charts {
     grid-template-columns: 1fr 1fr;
-    grid-template-rows: 220px;
+    grid-template-rows: minmax(240px, 280px);
   }
 
   .trend-chart .chart-body {
-    min-height: 320px;
+    min-height: 300px;
   }
 }
 
-@media (max-width: 720px) {
+@media (max-width: 900px) {
   .app-shell {
-    padding: 10px;
+    padding: 10px 10px 20px;
+    gap: 10px;
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
   }
 
   .topbar {
     flex-wrap: wrap;
-    height: auto;
+    align-items: stretch;
+    gap: 10px;
+    padding: 10px;
+    border-radius: 14px;
   }
 
   .topbar__brand {
-    flex: 1 1 100%;
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .topbar__logo {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+  }
+
+  .topbar h1 {
+    font-size: 0.98rem;
+  }
+
+  .topbar p {
+    font-size: 0.66rem;
+  }
+
+  .badge {
+    padding: 5px 9px;
+    font-size: 0.65rem;
+    align-self: center;
   }
 
   .filters {
+    flex: 1 1 100%;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
     width: 100%;
   }
 
   .filter {
-    flex: 1;
     min-width: 0;
   }
 
-  .kpi-row,
-  .side-charts {
+  .filter select {
+    width: 100%;
+    padding: 9px 26px 9px 8px;
+    font-size: 0.78rem;
+    border-radius: 9px;
+  }
+
+  /* Compact brand strip: chips you can swipe */
+  .brand-nav {
+    display: grid;
     grid-template-columns: 1fr;
+    gap: 0;
+    border-radius: 14px;
+  }
+
+  .brand-nav__totals {
+    display: none; /* KPIs below already show the same totals */
+  }
+
+  .brand-nav__section {
+    margin: 8px 12px 4px;
+  }
+
+  .brand-nav__list {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    max-height: none;
+    padding: 4px 10px 12px;
+    gap: 6px;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+    scrollbar-width: none;
+  }
+
+  .brand-nav__list::-webkit-scrollbar {
+    display: none;
+  }
+
+  .brand-nav__item {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.03);
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+
+  .brand-nav__item.active {
+    background: rgba(110, 160, 255, 0.2);
+  }
+
+  .brand-nav__dot {
+    display: none;
+  }
+
+  .main-panel {
+    gap: 10px;
+  }
+
+  .kpi-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .kpi-card {
+    padding: 10px 10px;
+    border-radius: 12px;
+  }
+
+  .kpi-label {
+    font-size: 0.62rem;
+  }
+
+  .kpi-value {
+    margin-top: 4px;
+    font-size: clamp(0.85rem, 3.8vw, 1.15rem);
+  }
+
+  .charts-grid {
+    gap: 10px;
+  }
+
+  .chart-panel {
+    border-radius: 14px;
+    padding: 12px 10px 10px;
+  }
+
+  .chart-panel__head {
+    flex-wrap: wrap;
+    gap: 2px 8px;
+    margin-bottom: 6px;
+  }
+
+  .chart-panel__head h3 {
+    font-size: 0.86rem;
+  }
+
+  .chart-panel__head p {
+    font-size: 0.65rem;
+    width: 100%;
+  }
+
+  .trend-chart .chart-body {
+    min-height: 260px;
+    height: 260px;
   }
 
   .side-charts {
-    grid-template-rows: repeat(2, 220px);
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    gap: 10px;
+  }
+
+  .donut-panel {
+    min-height: 260px;
   }
 
   .donut-layout {
-    grid-template-columns: 1fr 110px;
+    grid-template-columns: minmax(0, 1fr) minmax(120px, 0.85fr);
+    min-height: 200px;
+  }
+
+  .donut-panel--credit {
+    padding-bottom: 24px;
+  }
+}
+
+@media (max-width: 520px) {
+  .app-shell {
+    padding: 8px 8px max(16px, env(safe-area-inset-bottom));
+    gap: 8px;
+  }
+
+  .topbar {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .topbar__brand > div p {
+    display: none;
+  }
+
+  .badge {
+    display: none;
+  }
+
+  .filters {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .filter {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .filter span {
+    flex: 0 0 64px;
+    margin: 0;
+  }
+
+  .filter select {
+    flex: 1;
+  }
+
+  .kpi-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .kpi-card {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+  }
+
+  .kpi-card__top {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .kpi-value {
+    margin: 0;
+    font-size: 1.2rem;
+    text-align: right;
+  }
+
+  .trend-chart .chart-body {
+    min-height: 220px;
+    height: 220px;
+  }
+
+  .donut-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: 160px auto;
+  }
+
+  .donut-legend {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+    gap: 6px 10px;
+    max-height: none;
+    padding: 4px 2px 0;
+  }
+
+  .donut-legend li {
+    grid-template-columns: 8px auto auto;
+    gap: 5px;
+  }
+
+  .panel-credit {
+    right: 10px;
+    bottom: 6px;
+    font-size: 0.6rem;
   }
 }

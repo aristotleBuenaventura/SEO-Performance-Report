@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import type { BrandId } from '../types'
 import { formatNumber, formatUsd } from '../data/performanceData'
 
@@ -22,6 +23,16 @@ export function BrandNav({
   brandLabel,
   currencyLabel,
 }: BrandNavProps) {
+  const activeRef = useRef<HTMLButtonElement | null>(null)
+
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      inline: 'center',
+      block: 'nearest',
+    })
+  }, [active])
+
   return (
     <aside className="brand-nav">
       <div className="brand-nav__totals">
@@ -51,6 +62,7 @@ export function BrandNav({
           <button
             key={tab.id}
             type="button"
+            ref={tab.id === active ? activeRef : undefined}
             className={active === tab.id ? 'brand-nav__item active' : 'brand-nav__item'}
             onClick={() => onChange(tab.id)}
           >

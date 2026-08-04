@@ -49,6 +49,20 @@ body {
   overflow: hidden;
 }
 
+@media (max-width: 900px) {
+  html,
+  body,
+  #root {
+    height: auto;
+    min-height: 100%;
+  }
+
+  body {
+    overflow: auto;
+    overflow-x: hidden;
+  }
+}
+
 button,
 select {
   font: inherit;

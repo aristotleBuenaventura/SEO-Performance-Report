@@ -3,6 +3,7 @@ import {
   Legend,
   Line,
   LineChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -13,46 +14,60 @@ import { formatMonthLabel, formatNumber, formatUsd } from '../data/performanceDa
 
 interface TrendChartProps {
   data: MonthlyMetric[]
+  /** Focus month when zoomed (null = all months). */
+  zoomedMonth?: string | null
 }
 
-function shortMonth(month: string) {
+function axisLabel(month: string) {
   const [y, m] = month.split('-')
-  const names = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
+  const names = [
+    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+  ]
   const idx = Number(m) - 1
-  // Show year on Jan ticks for long ranges
-  if (m === '01') return `Jan ${y.slice(2)}`
-  return names[idx] ?? m
+  return `${names[idx] ?? m} ${y.slice(2)}`
 }
 
-export function TrendChart({ data }: TrendChartProps) {
+export function TrendChart({ data, zoomedMonth = null }: TrendChartProps) {
+  const zoomed = Boolean(zoomedMonth)
   const chartData = data.map((row) => ({
     ...row,
-    label: shortMonth(row.month),
+    label: axisLabel(row.month),
   }))
 
-  const tickInterval = chartData.length > 24 ? 2 : chartData.length > 14 ? 1 : 0
+  const focusLabel =
+    zoomedMonth != null
+      ? chartData.find((d) => d.month === zoomedMonth)?.label
+      : undefined
 
   return (
     <div className="chart-panel trend-chart">
       <div className="chart-panel__head">
         <h3>Performance trend</h3>
-        <p>Impressions · Clicks · GGR USD</p>
+        <p>
+          {zoomed
+            ? `Zoomed around ${formatMonthLabel(zoomedMonth!)} (±5 months)`
+            : 'All months · Impressions · Clicks · GGR USD'}
+        </p>
       </div>
       <div className="chart-body">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={chartData}
-            margin={{ top: 12, right: 8, left: 0, bottom: 4 }}
+            margin={{ top: 12, right: 8, left: 0, bottom: zoomed ? 8 : 4 }}
           >
             <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
             <XAxis
               dataKey="label"
               stroke="#6b7389"
               tick={{ fill: '#8b93a7', fontSize: 10 }}
-              interval={tickInterval}
-              minTickGap={8}
+              interval={zoomed ? 0 : chartData.length > 24 ? 2 : chartData.length > 14 ? 1 : 0}
+              minTickGap={4}
               axisLine={false}
               tickLine={false}
+              angle={zoomed ? -30 : 0}
+              textAnchor={zoomed ? 'end' : 'middle'}
+              height={zoomed ? 48 : 28}
             />
             <YAxis
               yAxisId="left"
@@ -109,15 +124,29 @@ export function TrendChart({ data }: TrendChartProps) {
               iconType="circle"
               wrapperStyle={{ fontSize: 11, paddingBottom: 4 }}
             />
+            {focusLabel ? (
+              <ReferenceLine
+                x={focusLabel}
+                stroke="rgba(240, 180, 41, 0.65)"
+                strokeWidth={2}
+                strokeDasharray="5 4"
+                label={{
+                  value: 'Selected',
+                  fill: '#f0b429',
+                  fontSize: 11,
+                  position: 'insideTopRight',
+                }}
+              />
+            ) : null}
             <Line
               yAxisId="left"
               type="monotone"
               dataKey="impressions"
               name="Impressions"
               stroke="#5b8def"
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 4 }}
+              strokeWidth={2.5}
+              dot={zoomed ? { r: 3.5, fill: '#5b8def' } : false}
+              activeDot={{ r: 5 }}
             />
             <Line
               yAxisId="left"
@@ -125,9 +154,9 @@ export function TrendChart({ data }: TrendChartProps) {
               dataKey="clicks"
               name="Clicks"
               stroke="#3dd6c3"
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 4 }}
+              strokeWidth={2.5}
+              dot={zoomed ? { r: 3.5, fill: '#3dd6c3' } : false}
+              activeDot={{ r: 5 }}
             />
             <Line
               yAxisId="right"
@@ -135,9 +164,9 @@ export function TrendChart({ data }: TrendChartProps) {
               dataKey="ggrUsd"
               name="GGR USD"
               stroke="#f0b429"
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 4 }}
+              strokeWidth={2.5}
+              dot={zoomed ? { r: 3.5, fill: '#f0b429' } : false}
+              activeDot={{ r: 5 }}
             />
           </LineChart>
         </ResponsiveContainer>

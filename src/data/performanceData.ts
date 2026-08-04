@@ -146,6 +146,23 @@ export function filterMonthly(
   return rows.filter((r) => r.month === month)
 }
 
+/**
+ * Zoom trend window around a selected month while keeping a visible line.
+ * `pad` = months before/after the focus month (default 5 → up to 11 points).
+ */
+export function zoomMonthlySeries(
+  rows: MonthlyMetric[],
+  month: string,
+  pad = 5,
+): MonthlyMetric[] {
+  if (month === 'all') return rows
+  const idx = rows.findIndex((r) => r.month === month)
+  if (idx < 0) return filterMonthly(rows, month)
+  const start = Math.max(0, idx - pad)
+  const end = Math.min(rows.length, idx + pad + 1)
+  return rows.slice(start, end)
+}
+
 export function getTotals(rows: MonthlyMetric[]) {
   return sumMetrics(rows)
 }

@@ -9,6 +9,7 @@ import {
   getRevenueByBrand,
   getTotals,
   getTrafficByBrand,
+  zoomMonthlySeries,
 } from './data/performanceData'
 import { FiltersBar } from './components/FiltersBar'
 import { KpiCards } from './components/KpiCards'
@@ -43,6 +44,12 @@ function App() {
 
   const monthly = useMemo(
     () => filterMonthly(chartSeries, month),
+    [chartSeries, month],
+  )
+
+  // Trend keeps a line: full series on "all", zoomed window around selected month
+  const trendSeries = useMemo(
+    () => zoomMonthlySeries(chartSeries, month, 5),
     [chartSeries, month],
   )
 
@@ -106,7 +113,7 @@ function App() {
           />
 
           <div className="charts-grid">
-            <TrendChart data={chartSeries} />
+            <TrendChart data={trendSeries} zoomedMonth={month === 'all' ? null : month} />
             <div className="side-charts">
               <DonutChart title="Revenue mix" data={revenuePie} mode="usd" />
               <DonutChart title="Traffic mix" data={trafficPie} mode="count" />

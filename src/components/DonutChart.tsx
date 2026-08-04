@@ -1,5 +1,6 @@
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts'
 import { formatNumber, formatUsd } from '../data/performanceData'
+import { chartTooltipStyle } from '../utils/chartTheme'
 
 const COLORS = [
   '#5b8def',
@@ -33,6 +34,7 @@ interface DonutChartProps {
   mode: 'usd' | 'count'
   /** Optional blended credit inside the panel (bottom-right). */
   credit?: string
+  theme?: 'dark' | 'light'
 }
 
 /** Keep chart readable: top slices + Other */
@@ -45,7 +47,13 @@ function compactSlices(data: Slice[], limit = 7): Slice[] {
   return [...top, { name: 'Other', value: rest }]
 }
 
-export function DonutChart({ title, data, mode, credit }: DonutChartProps) {
+export function DonutChart({
+  title,
+  data,
+  mode,
+  credit,
+  theme = 'dark',
+}: DonutChartProps) {
   const slices = compactSlices(data)
   const total = data.reduce((s, d) => s + d.value, 0)
 
@@ -73,12 +81,7 @@ export function DonutChart({ title, data, mode, credit }: DonutChartProps) {
                 ))}
               </Pie>
               <Tooltip
-                contentStyle={{
-                  background: '#141a27',
-                  border: '1px solid #2a3348',
-                  borderRadius: 10,
-                  color: '#e8ecf4',
-                }}
+                contentStyle={chartTooltipStyle(theme)}
                 formatter={(value) => {
                   const n = typeof value === 'number' ? value : Number(value) || 0
                   return mode === 'usd' ? formatUsd(n) : formatNumber(n)

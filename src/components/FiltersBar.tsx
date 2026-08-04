@@ -4,60 +4,82 @@ import {
   CURRENCY_OPTIONS,
   YEAR_OPTIONS,
 } from '../data/performanceData'
+import type { ThemeMode } from '../hooks/useTheme'
+import { FilterSelect } from './FilterSelect'
 
 interface FiltersBarProps {
   year: string
   month: string
   currency: CurrencyCode | 'all'
+  theme: ThemeMode
   onYearChange: (year: string) => void
   onMonthChange: (month: string) => void
   onCurrencyChange: (currency: CurrencyCode | 'all') => void
+  onThemeChange: (theme: ThemeMode) => void
 }
 
 export function FiltersBar({
   year,
   month,
   currency,
+  theme,
   onYearChange,
   onMonthChange,
   onCurrencyChange,
+  onThemeChange,
 }: FiltersBarProps) {
   return (
     <div className="filters">
       <label className="filter">
         <span>Year</span>
-        <select value={year} onChange={(e) => onYearChange(e.target.value)}>
-          {YEAR_OPTIONS.map((y) => (
-            <option key={y} value={y}>
-              {y === 'all' ? 'All years' : y}
-            </option>
-          ))}
-        </select>
+        <FilterSelect
+          aria-label="Year"
+          value={year}
+          onChange={onYearChange}
+          options={YEAR_OPTIONS.map((y) => ({
+            value: y,
+            label: y === 'all' ? 'All years' : y,
+          }))}
+        />
       </label>
 
       <label className="filter">
         <span>Month</span>
-        <select value={month} onChange={(e) => onMonthChange(e.target.value)}>
-          {CALENDAR_MONTH_OPTIONS.map((m) => (
-            <option key={m.value} value={m.value}>
-              {m.label}
-            </option>
-          ))}
-        </select>
+        <FilterSelect
+          aria-label="Month"
+          value={month}
+          onChange={onMonthChange}
+          options={CALENDAR_MONTH_OPTIONS.map((m) => ({
+            value: m.value,
+            label: m.label,
+          }))}
+        />
       </label>
 
       <label className="filter">
         <span>Currency</span>
-        <select
+        <FilterSelect
+          aria-label="Currency"
           value={currency}
-          onChange={(e) => onCurrencyChange(e.target.value as CurrencyCode | 'all')}
-        >
-          {CURRENCY_OPTIONS.map((c) => (
-            <option key={c} value={c}>
-              {c === 'all' ? 'All' : c}
-            </option>
-          ))}
-        </select>
+          onChange={(v) => onCurrencyChange(v as CurrencyCode | 'all')}
+          options={CURRENCY_OPTIONS.map((c) => ({
+            value: c,
+            label: c === 'all' ? 'All' : c,
+          }))}
+        />
+      </label>
+
+      <label className="filter">
+        <span>Theme</span>
+        <FilterSelect
+          aria-label="Theme"
+          value={theme}
+          onChange={(v) => onThemeChange(v as ThemeMode)}
+          options={[
+            { value: 'dark', label: 'Dark' },
+            { value: 'light', label: 'Light' },
+          ]}
+        />
       </label>
     </div>
   )

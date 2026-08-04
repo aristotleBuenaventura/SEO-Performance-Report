@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react'
 import type { BrandId, CurrencyCode } from './types'
 import {
   BRAND_TABS,
-  DATA_SOURCE,
   exactMonthKey,
   filterByPeriod,
   formatPeriodLabel,
@@ -19,9 +18,11 @@ import { KpiCards } from './components/KpiCards'
 import { TrendChart } from './components/TrendChart'
 import { DonutChart } from './components/DonutChart'
 import { BrandNav } from './components/BrandNav'
+import { useTheme } from './hooks/useTheme'
 import './App.css'
 
 function App() {
+  const { theme, setTheme } = useTheme()
   const [year, setYear] = useState('all')
   const [month, setMonth] = useState('all')
   const [brand, setBrand] = useState<BrandId>('summary')
@@ -95,14 +96,12 @@ function App() {
           year={year}
           month={month}
           currency={currency}
+          theme={theme}
           onYearChange={setYear}
           onMonthChange={setMonth}
           onCurrencyChange={setCurrency}
+          onThemeChange={setTheme}
         />
-
-        <span className="badge" title={DATA_SOURCE}>
-          Live Excel
-        </span>
       </header>
 
       <div className="dashboard">
@@ -129,14 +128,21 @@ function App() {
               data={trendSeries}
               zoomedMonth={focusMonth}
               zoomLabel={isZoomed ? formatPeriodLabel(period) : null}
+              theme={theme}
             />
             <div className="side-charts">
-              <DonutChart title="Revenue mix" data={revenuePie} mode="usd" />
+              <DonutChart
+                title="Revenue mix"
+                data={revenuePie}
+                mode="usd"
+                theme={theme}
+              />
               <DonutChart
                 title="Traffic mix"
                 data={trafficPie}
                 mode="count"
                 credit="Developed by Aris"
+                theme={theme}
               />
             </div>
           </div>

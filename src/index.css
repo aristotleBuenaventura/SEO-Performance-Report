@@ -1,4 +1,5 @@
-:root {
+:root,
+[data-theme='dark'] {
   --bg: #070a10;
   --bg-elevated: #0e131c;
   --bg-card: #121826;
@@ -14,6 +15,47 @@
   --radius: 16px;
   --radius-sm: 12px;
   --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+  --topbar-bg: rgba(18, 24, 38, 0.72);
+  --panel-bg: rgba(18, 24, 38, 0.9);
+  --tooltip-bg: #141a27;
+  --tooltip-border: #2a3348;
+  --grid-line: rgba(255, 255, 255, 0.06);
+  --chip-bg: rgba(255, 255, 255, 0.03);
+  --glow-a: rgba(110, 160, 255, 0.16);
+  --glow-b: rgba(47, 214, 194, 0.1);
+  --glow-c: rgba(240, 180, 41, 0.06);
+  --scrollbar: #2a3348;
+  color-scheme: dark;
+}
+
+[data-theme='light'] {
+  --bg: #f3f5f9;
+  --bg-elevated: #ffffff;
+  --bg-card: #ffffff;
+  --bg-card-2: #f7f8fc;
+  --border: rgba(15, 23, 42, 0.1);
+  --border-strong: rgba(15, 23, 42, 0.16);
+  --text: #0f172a;
+  --muted: #64748b;
+  --accent: #3b82f6;
+  --teal: #0d9488;
+  --gold: #d97706;
+  --pink: #e11d48;
+  --shadow: 0 14px 40px rgba(15, 23, 42, 0.08);
+  --topbar-bg: rgba(255, 255, 255, 0.86);
+  --panel-bg: rgba(255, 255, 255, 0.95);
+  --tooltip-bg: #ffffff;
+  --tooltip-border: #e2e8f0;
+  --grid-line: rgba(15, 23, 42, 0.08);
+  --chip-bg: rgba(15, 23, 42, 0.04);
+  --glow-a: rgba(59, 130, 246, 0.12);
+  --glow-b: rgba(13, 148, 136, 0.08);
+  --glow-c: rgba(217, 119, 6, 0.06);
+  --scrollbar: #cbd5e1;
+  color-scheme: light;
+}
+
+:root {
   font-family:
     'Segoe UI',
     Inter,
@@ -42,10 +84,11 @@ body,
 body {
   min-height: 100dvh;
   background:
-    radial-gradient(900px 480px at 0% 0%, rgba(110, 160, 255, 0.16), transparent 55%),
-    radial-gradient(700px 420px at 100% 0%, rgba(47, 214, 194, 0.1), transparent 50%),
-    radial-gradient(600px 400px at 80% 100%, rgba(240, 180, 41, 0.06), transparent 45%),
+    radial-gradient(900px 480px at 0% 0%, var(--glow-a), transparent 55%),
+    radial-gradient(700px 420px at 100% 0%, var(--glow-b), transparent 50%),
+    radial-gradient(600px 400px at 80% 100%, var(--glow-c), transparent 45%),
     var(--bg);
+  color: var(--text);
   overflow: hidden;
 }
 
@@ -68,8 +111,7 @@ select {
   font: inherit;
 }
 
-/* thin scrollbars */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #2a3348 transparent;
+  scrollbar-color: var(--scrollbar) transparent;
 }

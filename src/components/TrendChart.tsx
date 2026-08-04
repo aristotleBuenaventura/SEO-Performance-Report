@@ -11,13 +11,17 @@ import {
 } from 'recharts'
 import type { MonthlyMetric } from '../types'
 import { formatMonthLabel, formatNumber, formatUsd } from '../data/performanceData'
+import {
+  chartAxisColor,
+  chartGridColor,
+  chartTooltipStyle,
+} from '../utils/chartTheme'
 
 interface TrendChartProps {
   data: MonthlyMetric[]
-  /** Focus month when zoomed to an exact YYYY-MM (null otherwise). */
   zoomedMonth?: string | null
-  /** Subtitle when year and/or month filter is active. */
   zoomLabel?: string | null
+  theme?: 'dark' | 'light'
 }
 
 function axisLabel(month: string) {
@@ -34,8 +38,10 @@ export function TrendChart({
   data,
   zoomedMonth = null,
   zoomLabel = null,
+  theme = 'dark',
 }: TrendChartProps) {
   const zoomed = Boolean(zoomLabel) || Boolean(zoomedMonth)
+  const axis = chartAxisColor(theme)
   const chartData = data.map((row) => ({
     ...row,
     label: axisLabel(row.month),
@@ -62,11 +68,11 @@ export function TrendChart({
             data={chartData}
             margin={{ top: 12, right: 8, left: 0, bottom: zoomed ? 8 : 4 }}
           >
-            <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
+            <CartesianGrid stroke={chartGridColor(theme)} vertical={false} />
             <XAxis
               dataKey="label"
-              stroke="#6b7389"
-              tick={{ fill: '#8b93a7', fontSize: 10 }}
+              stroke={axis}
+              tick={{ fill: axis, fontSize: 10 }}
               interval={zoomed ? 0 : chartData.length > 24 ? 2 : chartData.length > 14 ? 1 : 0}
               minTickGap={4}
               axisLine={false}
@@ -77,9 +83,9 @@ export function TrendChart({
             />
             <YAxis
               yAxisId="left"
-              stroke="#6b7389"
+              stroke={axis}
               width={44}
-              tick={{ fill: '#8b93a7', fontSize: 10 }}
+              tick={{ fill: axis, fontSize: 10 }}
               axisLine={false}
               tickLine={false}
               tickFormatter={(v) =>
@@ -93,9 +99,9 @@ export function TrendChart({
             <YAxis
               yAxisId="right"
               orientation="right"
-              stroke="#6b7389"
+              stroke={axis}
               width={48}
-              tick={{ fill: '#8b93a7', fontSize: 10 }}
+              tick={{ fill: axis, fontSize: 10 }}
               axisLine={false}
               tickLine={false}
               tickFormatter={(v) =>
@@ -107,13 +113,7 @@ export function TrendChart({
               }
             />
             <Tooltip
-              contentStyle={{
-                background: '#141a27',
-                border: '1px solid #2a3348',
-                borderRadius: 10,
-                color: '#e8ecf4',
-                boxShadow: '0 12px 40px rgba(0,0,0,0.45)',
-              }}
+              contentStyle={chartTooltipStyle(theme)}
               labelFormatter={(_, payload) => {
                 const row = payload?.[0]?.payload as MonthlyMetric | undefined
                 return row ? formatMonthLabel(row.month) : ''

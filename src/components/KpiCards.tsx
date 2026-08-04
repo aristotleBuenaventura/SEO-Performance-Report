@@ -1,4 +1,4 @@
-import { formatNumber, formatUsd } from '../data/dummyData'
+import { formatNumber, formatUsd } from '../data/performanceData'
 
 interface KpiCardsProps {
   impressions: number
@@ -6,21 +6,30 @@ interface KpiCardsProps {
   ggrUsd: number
 }
 
+const cards = [
+  { key: 'impressions', label: 'Impressions', tone: 'blue' },
+  { key: 'clicks', label: 'Clicks', tone: 'teal' },
+  { key: 'ggrUsd', label: 'Revenue · GGR USD', tone: 'gold' },
+] as const
+
 export function KpiCards({ impressions, clicks, ggrUsd }: KpiCardsProps) {
+  const values = { impressions, clicks, ggrUsd }
+
   return (
     <div className="kpi-row">
-      <article className="kpi-card">
-        <p className="kpi-label">Impressions</p>
-        <p className="kpi-value">{formatNumber(impressions)}</p>
-      </article>
-      <article className="kpi-card">
-        <p className="kpi-label">Clicks</p>
-        <p className="kpi-value">{formatNumber(clicks)}</p>
-      </article>
-      <article className="kpi-card kpi-card--accent">
-        <p className="kpi-label">Revenue (GGR USD)</p>
-        <p className="kpi-value">{formatUsd(ggrUsd)}</p>
-      </article>
+      {cards.map((card) => (
+        <article key={card.key} className={`kpi-card kpi-card--${card.tone}`}>
+          <div className="kpi-card__top">
+            <p className="kpi-label">{card.label}</p>
+            <span className={`kpi-pulse kpi-pulse--${card.tone}`} />
+          </div>
+          <p className="kpi-value">
+            {card.key === 'ggrUsd'
+              ? formatUsd(values.ggrUsd)
+              : formatNumber(values[card.key])}
+          </p>
+        </article>
+      ))}
     </div>
   )
 }

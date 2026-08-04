@@ -2,18 +2,18 @@ import { useMemo, useState } from 'react'
 import type { BrandId, CurrencyCode } from './types'
 import {
   BRAND_TABS,
+  DATA_SOURCE,
   filterMonthly,
   getBrandMonthly,
   getRevenueByBrand,
   getTotals,
   getTrafficByBrand,
-} from './data/dummyData'
+} from './data/performanceData'
 import { FiltersBar } from './components/FiltersBar'
 import { KpiCards } from './components/KpiCards'
-import { SummarySidebar } from './components/SummarySidebar'
 import { TrendChart } from './components/TrendChart'
 import { DonutChart } from './components/DonutChart'
-import { BrandTabs } from './components/BrandTabs'
+import { BrandNav } from './components/BrandNav'
 import './App.css'
 
 function App() {
@@ -46,16 +46,31 @@ function App() {
 
   return (
     <div className="app-shell">
-      <header className="app-header">
-        <div>
-          <h1>SEO Performance Report</h1>
-          <p>Per-brand Impressions, Clicks &amp; GGR USD</p>
+      <header className="topbar">
+        <div className="topbar__brand">
+          <div className="topbar__mark" aria-hidden />
+          <div>
+            <h1>SEO Performance</h1>
+            <p>Impressions · Clicks · GGR USD</p>
+          </div>
         </div>
-        <span className="badge">Dark · Dummy data</span>
+
+        <FiltersBar
+          month={month}
+          currency={currency}
+          onMonthChange={setMonth}
+          onCurrencyChange={setCurrency}
+        />
+
+        <span className="badge" title={DATA_SOURCE}>
+          Live Excel
+        </span>
       </header>
 
       <div className="dashboard">
-        <SummarySidebar
+        <BrandNav
+          active={brand}
+          onChange={setBrand}
           brandLabel={brandLabel}
           impressions={totals.impressions}
           clicks={totals.clicks}
@@ -63,15 +78,6 @@ function App() {
         />
 
         <main className="main-panel">
-          <FiltersBar
-            month={month}
-            brand={brand}
-            currency={currency}
-            onMonthChange={setMonth}
-            onBrandChange={setBrand}
-            onCurrencyChange={setCurrency}
-          />
-
           <KpiCards
             impressions={totals.impressions}
             clicks={totals.clicks}
@@ -81,12 +87,10 @@ function App() {
           <div className="charts-grid">
             <TrendChart data={chartSeries} />
             <div className="side-charts">
-              <DonutChart title="Revenue by brand" data={revenuePie} mode="usd" />
-              <DonutChart title="Traffic (impressions)" data={trafficPie} mode="count" />
+              <DonutChart title="Revenue mix" data={revenuePie} mode="usd" />
+              <DonutChart title="Traffic mix" data={trafficPie} mode="count" />
             </div>
           </div>
-
-          <BrandTabs active={brand} onChange={setBrand} />
         </main>
       </div>
     </div>

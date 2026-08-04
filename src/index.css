@@ -1,16 +1,26 @@
 :root {
-  --bg: #0b0e14;
-  --bg-elevated: #121722;
-  --bg-card: #171d2b;
-  --border: #2a3348;
-  --text: #e8ecf4;
-  --muted: #8b93a7;
-  --accent: #5b8def;
-  --teal: #3dd6c3;
+  --bg: #070a10;
+  --bg-elevated: #0e131c;
+  --bg-card: #121826;
+  --bg-card-2: #161d2e;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --text: #eef2f9;
+  --muted: #8b95ab;
+  --accent: #6ea0ff;
+  --teal: #2fd6c2;
   --gold: #f0b429;
-  --radius: 14px;
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-  line-height: 1.45;
+  --pink: #ff6b8a;
+  --radius: 16px;
+  --radius-sm: 12px;
+  --shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+  font-family:
+    'Segoe UI',
+    Inter,
+    system-ui,
+    -apple-system,
+    sans-serif;
+  line-height: 1.4;
   color: var(--text);
   background: var(--bg);
   font-synthesis: none;
@@ -26,17 +36,26 @@ html,
 body,
 #root {
   margin: 0;
-  min-height: 100%;
+  height: 100%;
 }
 
 body {
+  min-height: 100dvh;
   background:
-    radial-gradient(1200px 600px at 10% -10%, rgba(91, 141, 239, 0.12), transparent 55%),
-    radial-gradient(900px 500px at 90% 0%, rgba(61, 214, 195, 0.08), transparent 50%),
+    radial-gradient(900px 480px at 0% 0%, rgba(110, 160, 255, 0.16), transparent 55%),
+    radial-gradient(700px 420px at 100% 0%, rgba(47, 214, 194, 0.1), transparent 50%),
+    radial-gradient(600px 400px at 80% 100%, rgba(240, 180, 41, 0.06), transparent 45%),
     var(--bg);
+  overflow: hidden;
 }
 
 button,
 select {
   font: inherit;
+}
+
+/* thin scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2a3348 transparent;
 }

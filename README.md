@@ -9,13 +9,32 @@ npm install
 npm run dev
 ```
 
-## Current status
+## Data source
 
-- Layout matches the wireframe (summary sidebar, filters, KPIs, trend line, pies, brand tabs)
-- Uses **dummy data** in `src/data/dummyData.ts`
-- Swap that module later when Excel/CSV upload is wired
+From `SEO Performance Report - June 2026.xlsx` → `src/data/excelExtract.json`
+
+| Tab | Excel source |
+|---|---|
+| MCW | `MCW` (excluding MXW CCY rows) |
+| MXW | `MCW` rows where CCY contains `MXW` |
+| Banglabet | `B1` |
+| Bengalbet | `B2` |
+| Khelaghor | `K1` |
+| Banglaslots | `B3` |
+| Banglawin | `B4` |
+| GA888 | `G1` |
+| TK Baazi | `TK` |
+| Banglaplus | `BP` |
+| Joywin | `JW` |
+| NCVIP | `NCVIP` |
+| MNLBet | `M3` |
+| CF789 | `C1` |
+| BPM | `BPM` |
+| Ads | `Ads` |
+| Blackhat Push | `Blackhat Push Ads` |
+| Phishing | `Phishing Campaign` |
 
 ## Docs
 
-- `docs/excel-formula-spec.md` — Excel formula R&D
-- `docs/excel-formulas.json` — machine-readable extract
+- `docs/excel-formula-spec.md`
+- `docs/excel-formulas.json`

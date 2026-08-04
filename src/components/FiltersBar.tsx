@@ -1,21 +1,17 @@
-import type { BrandId, CurrencyCode } from '../types'
-import { BRAND_TABS, CURRENCY_OPTIONS, MONTH_OPTIONS, formatMonthLabel } from '../data/dummyData'
+import type { CurrencyCode } from '../types'
+import { CURRENCY_OPTIONS, MONTH_OPTIONS, formatMonthLabel } from '../data/performanceData'
 
 interface FiltersBarProps {
   month: string
-  brand: BrandId
   currency: CurrencyCode | 'all'
   onMonthChange: (month: string) => void
-  onBrandChange: (brand: BrandId) => void
   onCurrencyChange: (currency: CurrencyCode | 'all') => void
 }
 
 export function FiltersBar({
   month,
-  brand,
   currency,
   onMonthChange,
-  onBrandChange,
   onCurrencyChange,
 }: FiltersBarProps) {
   return (
@@ -26,20 +22,6 @@ export function FiltersBar({
           {MONTH_OPTIONS.map((m) => (
             <option key={m} value={m}>
               {formatMonthLabel(m)}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <label className="filter">
-        <span>Brand</span>
-        <select
-          value={brand}
-          onChange={(e) => onBrandChange(e.target.value as BrandId)}
-        >
-          {BRAND_TABS.map((b) => (
-            <option key={b.id} value={b.id}>
-              {b.label}
             </option>
           ))}
         </select>

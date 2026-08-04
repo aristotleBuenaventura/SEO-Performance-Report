@@ -30,14 +30,14 @@
   flex: 1;
 }
 
-.topbar__mark {
-  width: 34px;
-  height: 34px;
+.topbar__logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
   border-radius: 10px;
-  background:
-    linear-gradient(135deg, #6ea0ff 0%, #2fd6c2 55%, #f0b429 120%);
-  box-shadow: 0 0 24px rgba(110, 160, 255, 0.35);
   flex-shrink: 0;
+  background: #050a18;
+  box-shadow: 0 0 20px rgba(212, 175, 55, 0.25);
 }
 
 .topbar h1 {

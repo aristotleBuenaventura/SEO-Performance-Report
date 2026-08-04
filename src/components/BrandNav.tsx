@@ -1,22 +1,26 @@
 import type { BrandId } from '../types'
-import { BRAND_TABS, formatNumber, formatUsd } from '../data/performanceData'
+import { formatNumber, formatUsd } from '../data/performanceData'
 
 interface BrandNavProps {
+  tabs: { id: BrandId; label: string }[]
   active: BrandId
   onChange: (brand: BrandId) => void
   impressions: number
   clicks: number
   ggrUsd: number
   brandLabel: string
+  currencyLabel: string
 }
 
 export function BrandNav({
+  tabs,
   active,
   onChange,
   impressions,
   clicks,
   ggrUsd,
   brandLabel,
+  currencyLabel,
 }: BrandNavProps) {
   return (
     <aside className="brand-nav">
@@ -39,9 +43,11 @@ export function BrandNav({
         </dl>
       </div>
 
-      <p className="brand-nav__section">Brands</p>
+      <p className="brand-nav__section">
+        Brands{currencyLabel !== 'All' ? ` · ${currencyLabel}` : ''}
+      </p>
       <nav className="brand-nav__list" aria-label="Brands">
-        {BRAND_TABS.map((tab) => (
+        {tabs.map((tab) => (
           <button
             key={tab.id}
             type="button"

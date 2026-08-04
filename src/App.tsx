@@ -1,10 +1,11 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { BrandId, CurrencyCode } from './types'
 import {
   BRAND_TABS,
   DATA_SOURCE,
   filterMonthly,
   getBrandMonthly,
+  getBrandTabsForCurrency,
   getRevenueByBrand,
   getTotals,
   getTrafficByBrand,
@@ -20,6 +21,18 @@ function App() {
   const [month, setMonth] = useState('all')
   const [brand, setBrand] = useState<BrandId>('summary')
   const [currency, setCurrency] = useState<CurrencyCode | 'all'>('all')
+
+  const visibleTabs = useMemo(
+    () => getBrandTabsForCurrency(currency),
+    [currency],
+  )
+
+  // If active brand is hidden by currency filter, fall back to Summary
+  useEffect(() => {
+    if (!visibleTabs.some((t) => t.id === brand)) {
+      setBrand('summary')
+    }
+  }, [visibleTabs, brand])
 
   const brandLabel = BRAND_TABS.find((t) => t.id === brand)?.label ?? 'Summary'
 
@@ -48,7 +61,13 @@ function App() {
     <div className="app-shell">
       <header className="topbar">
         <div className="topbar__brand">
-          <div className="topbar__mark" aria-hidden />
+          <img
+            className="topbar__logo"
+            src="/logo.png"
+            alt="MCW"
+            width={40}
+            height={40}
+          />
           <div>
             <h1>SEO Performance</h1>
             <p>Impressions · Clicks · GGR USD</p>
@@ -69,9 +88,11 @@ function App() {
 
       <div className="dashboard">
         <BrandNav
+          tabs={visibleTabs}
           active={brand}
           onChange={setBrand}
           brandLabel={brandLabel}
+          currencyLabel={currency === 'all' ? 'All' : currency}
           impressions={totals.impressions}
           clicks={totals.clicks}
           ggrUsd={totals.ggrUsd}

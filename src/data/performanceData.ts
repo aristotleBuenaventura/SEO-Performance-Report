@@ -4,8 +4,9 @@ import extract from './excelExtract.json'
 type ExtractBrandId = Exclude<BrandId, 'summary'>
 
 /**
- * Live data from SEO Performance Report - June 2026.xlsx
- * See extract.mapping for sheet → brand mapping.
+ * Excel rules (SEO Performance Report - June 2026.xlsx):
+ * - Column A = Month (carry-forward when blank)
+ * - Column B = CCY / currency (base code; carry-forward when blank)
  */
 export const DATA_SOURCE = extract.source
 
@@ -21,20 +22,35 @@ export const BRAND_TABS: { id: BrandId; label: string }[] = [
 
 export const BRAND_DATA: BrandData[] = tabOrder.map((id) => {
   const meta = extract.brands[id as keyof typeof extract.brands]
+  const raw = (extract.data as Record<string, Record<string, MonthlyMetric[]>>)[id]
   return {
     id,
     label: meta.label,
-    currency: meta.currency as CurrencyCode,
-    monthly: (extract.data as Record<string, MonthlyMetric[]>)[id],
+    currencies: meta.currencies as string[],
+    monthlyByCurrency: raw,
   }
 })
 
-/** All months present in the Excel extract (sorted). */
+/** All months from column A across the workbook. */
 export const MONTHS = extract.months as string[]
 
 export const MONTH_OPTIONS = ['all', ...MONTHS] as const
 
-export const CURRENCY_OPTIONS = ['all', 'USD', 'BDT', 'PHP', 'VND', 'PKR'] as const
+/** Distinct currencies from column B. */
+export const CURRENCY_OPTIONS = ['all', ...(extract.currencies as string[])] as const
+
+export function getBrandTabsForCurrency(
+  currency: CurrencyCode | 'all',
+): { id: BrandId; label: string }[] {
+  if (currency === 'all') return BRAND_TABS
+  return [
+    { id: 'summary', label: 'Summary' },
+    ...BRAND_DATA.filter((b) => b.currencies.includes(currency)).map((b) => ({
+      id: b.id,
+      label: b.label,
+    })),
+  ]
+}
 
 export function formatMonthLabel(month: string): string {
   if (month === 'all') return 'All months'
@@ -68,11 +84,6 @@ function sumMetrics(rows: MonthlyMetric[]): MonthlyMetric {
   )
 }
 
-function brandsForCurrency(currency: CurrencyCode | 'all') {
-  if (currency === 'all' || currency === 'USD') return BRAND_DATA
-  return BRAND_DATA.filter((b) => b.currency === currency)
-}
-
 function alignToMonths(
   rows: MonthlyMetric[],
   months: string[],
@@ -89,12 +100,27 @@ function alignToMonths(
   )
 }
 
+function brandSeries(
+  brand: BrandData,
+  currency: CurrencyCode | 'all',
+): MonthlyMetric[] {
+  if (currency === 'all') return brand.monthlyByCurrency.ALL ?? []
+  return brand.monthlyByCurrency[currency] ?? []
+}
+
+function brandsForCurrency(currency: CurrencyCode | 'all'): BrandData[] {
+  if (currency === 'all') return BRAND_DATA
+  return BRAND_DATA.filter((b) => b.currencies.includes(currency))
+}
+
 export function getSummaryMonthly(
   currency: CurrencyCode | 'all' = 'all',
 ): MonthlyMetric[] {
   const brands = brandsForCurrency(currency)
   return MONTHS.map((month) => {
-    const rows = brands.flatMap((b) => b.monthly.filter((m) => m.month === month))
+    const rows = brands.flatMap((b) =>
+      brandSeries(b, currency).filter((m) => m.month === month),
+    )
     return { ...sumMetrics(rows), month }
   })
 }
@@ -106,10 +132,10 @@ export function getBrandMonthly(
   if (brandId === 'summary') return getSummaryMonthly(currency)
   const brand = BRAND_DATA.find((b) => b.id === brandId)
   if (!brand) return []
-  if (currency !== 'all' && currency !== 'USD' && brand.currency !== currency) {
+  if (currency !== 'all' && !brand.currencies.includes(currency)) {
     return alignToMonths([], MONTHS)
   }
-  return alignToMonths(brand.monthly, MONTHS)
+  return alignToMonths(brandSeries(brand, currency), MONTHS)
 }
 
 export function filterMonthly(
@@ -129,7 +155,7 @@ export function getRevenueByBrand(
   currency: CurrencyCode | 'all' = 'all',
 ) {
   return brandsForCurrency(currency).map((brand) => {
-    const rows = filterMonthly(brand.monthly, month)
+    const rows = filterMonthly(brandSeries(brand, currency), month)
     const total = sumMetrics(rows)
     return {
       name: brand.label,
@@ -143,7 +169,7 @@ export function getTrafficByBrand(
   currency: CurrencyCode | 'all' = 'all',
 ) {
   return brandsForCurrency(currency).map((brand) => {
-    const rows = filterMonthly(brand.monthly, month)
+    const rows = filterMonthly(brandSeries(brand, currency), month)
     const total = sumMetrics(rows)
     return {
       name: brand.label,

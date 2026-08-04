@@ -19,10 +19,11 @@ export type BrandId =
   | 'blackhat'
   | 'phishing'
 
-export type CurrencyCode = 'USD' | 'BDT' | 'PHP' | 'VND' | 'PKR'
+/** Base currency codes from Excel column B (CCY). */
+export type CurrencyCode = string
 
 export interface MonthlyMetric {
-  month: string // YYYY-MM
+  month: string // YYYY-MM from column A
   impressions: number
   clicks: number
   ggrUsd: number
@@ -31,8 +32,10 @@ export interface MonthlyMetric {
 export interface BrandData {
   id: BrandId
   label: string
-  currency: CurrencyCode
-  monthly: MonthlyMetric[]
+  /** Currencies present in column B for this brand */
+  currencies: string[]
+  /** monthly[currencyCode | 'ALL'] */
+  monthlyByCurrency: Record<string, MonthlyMetric[]>
 }
 
 export interface DashboardFilters {

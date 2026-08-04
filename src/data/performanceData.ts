@@ -36,10 +36,15 @@ export const MONTHS = extract.months as string[]
 
 export const MONTH_OPTIONS = ['all', ...MONTHS] as const
 
-/** Distinct years from column A (YYYY-MM). */
+/** Distinct years from column A (YYYY-MM), plus the current calendar year. */
 export const YEAR_OPTIONS = [
   'all',
-  ...Array.from(new Set(MONTHS.map((m) => m.slice(0, 4)))).sort(),
+  ...Array.from(
+    new Set([
+      ...MONTHS.map((m) => m.slice(0, 4)),
+      String(new Date().getFullYear()),
+    ]),
+  ).sort(),
 ] as const
 
 /** Calendar months (01–12) for the Month filter. */
@@ -58,6 +63,14 @@ export const CALENDAR_MONTH_OPTIONS = [
   { value: '11', label: 'November' },
   { value: '12', label: 'December' },
 ] as const
+
+/** Default filters: current calendar year + month. */
+export function getCurrentPeriodDefaults(): PeriodFilter {
+  const now = new Date()
+  const year = String(now.getFullYear())
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  return { year, month }
+}
 
 export interface PeriodFilter {
   year: string // 'all' | 'YYYY'

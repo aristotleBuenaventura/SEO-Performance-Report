@@ -7,6 +7,7 @@ import {
   formatPeriodLabel,
   getBrandMonthly,
   getBrandTabsForCurrency,
+  getCurrentPeriodDefaults,
   getRevenueByBrandPeriod,
   getTotals,
   getTrafficByBrandPeriod,
@@ -23,8 +24,8 @@ import './App.css'
 
 function App() {
   const { theme, setTheme } = useTheme()
-  const [year, setYear] = useState('all')
-  const [month, setMonth] = useState('all')
+  const [year, setYear] = useState(() => getCurrentPeriodDefaults().year)
+  const [month, setMonth] = useState(() => getCurrentPeriodDefaults().month)
   const [brand, setBrand] = useState<BrandId>('summary')
   const [currency, setCurrency] = useState<CurrencyCode | 'all'>('all')
 

@@ -1,0 +1,23 @@
+name = "seo-performance-report"
+main = "src/index.ts"
+compatibility_date = "2025-07-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Replace ids after: npm run kv:create (from worker/)
+[[kv_namespaces]]
+binding = "CONFIG"
+id = "00000000000000000000000000000001"
+preview_id = "00000000000000000000000000000001"
+
+[vars]
+PUBLIC_INTERNET = "false"
+COOKIE_SAMESITE = "Lax"
+APP_URL = "http://localhost:5173"
+SMTP_HOST = "smtp.gmail.com"
+SMTP_PORT = "465"
+SMTP_USER = "aris@casinomcw.com"
+SMTP_FROM = "SEO Report <aris@casinomcw.com>"
+
+# Secrets (set via CLI — never commit):
+#   npx wrangler secret put ADMIN_SECRET
+#   npx wrangler secret put SMTP_PASS

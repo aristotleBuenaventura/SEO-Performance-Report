@@ -25,6 +25,15 @@
   --glow-b: rgba(47, 214, 194, 0.1);
   --glow-c: rgba(240, 180, 41, 0.06);
   --scrollbar: #2a3348;
+  --ok: #2fd6c2;
+  --fail: #ff6b8a;
+  --surface: var(--bg-elevated);
+  --surface-2: var(--bg-card);
+  --line: var(--border);
+  --clock: var(--accent);
+  --accent-hover: #8bb4ff;
+  --hover-fill: rgba(255, 255, 255, 0.06);
+  --accent-rgb: 110, 160, 255;
   color-scheme: dark;
 }
 
@@ -52,6 +61,15 @@
   --glow-b: rgba(13, 148, 136, 0.08);
   --glow-c: rgba(217, 119, 6, 0.06);
   --scrollbar: #cbd5e1;
+  --ok: #0d9488;
+  --fail: #e11d48;
+  --surface: var(--bg-elevated);
+  --surface-2: var(--bg-card-2);
+  --line: var(--border);
+  --clock: var(--accent);
+  --accent-hover: #2563eb;
+  --hover-fill: rgba(15, 23, 42, 0.05);
+  --accent-rgb: 59, 130, 246;
   color-scheme: light;
 }
 

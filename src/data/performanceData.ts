@@ -1,53 +1,16 @@
-import type { BrandData, BrandId, CurrencyCode, MonthlyMetric } from '../types'
-import extract from './excelExtract.json'
+import type {
+  BrandData,
+  BrandId,
+  CurrencyCode,
+  MonthlyMetric,
+  ReportExtract,
+} from '../types'
 
-type ExtractBrandId = Exclude<BrandId, 'summary'>
+export interface PeriodFilter {
+  year: string // 'all' | 'YYYY'
+  month: string // 'all' | '01'..'12'
+}
 
-/**
- * Excel rules (SEO Performance Report - June 2026.xlsx):
- * - Column A = Month (carry-forward when blank)
- * - Column B = CCY / currency (base code; carry-forward when blank)
- */
-export const DATA_SOURCE = extract.source
-
-const tabOrder = extract.tabOrder as ExtractBrandId[]
-
-export const BRAND_TABS: { id: BrandId; label: string }[] = [
-  { id: 'summary', label: 'Summary' },
-  ...tabOrder.map((id) => ({
-    id,
-    label: extract.brands[id as keyof typeof extract.brands].label,
-  })),
-]
-
-export const BRAND_DATA: BrandData[] = tabOrder.map((id) => {
-  const meta = extract.brands[id as keyof typeof extract.brands]
-  const raw = (extract.data as Record<string, Record<string, MonthlyMetric[]>>)[id]
-  return {
-    id,
-    label: meta.label,
-    currencies: meta.currencies as string[],
-    monthlyByCurrency: raw,
-  }
-})
-
-/** All months from column A across the workbook. */
-export const MONTHS = extract.months as string[]
-
-export const MONTH_OPTIONS = ['all', ...MONTHS] as const
-
-/** Distinct years from column A (YYYY-MM), plus the current calendar year. */
-export const YEAR_OPTIONS = [
-  'all',
-  ...Array.from(
-    new Set([
-      ...MONTHS.map((m) => m.slice(0, 4)),
-      String(new Date().getFullYear()),
-    ]),
-  ).sort(),
-] as const
-
-/** Calendar months (01–12) for the Month filter. */
 export const CALENDAR_MONTH_OPTIONS = [
   { value: 'all', label: 'All months' },
   { value: '01', label: 'January' },
@@ -64,17 +27,11 @@ export const CALENDAR_MONTH_OPTIONS = [
   { value: '12', label: 'December' },
 ] as const
 
-/** Default filters: current calendar year + month. */
 export function getCurrentPeriodDefaults(): PeriodFilter {
   const now = new Date()
   const year = String(now.getFullYear())
   const month = String(now.getMonth() + 1).padStart(2, '0')
   return { year, month }
-}
-
-export interface PeriodFilter {
-  year: string // 'all' | 'YYYY'
-  month: string // 'all' | '01'..'12'
 }
 
 export function formatPeriodLabel(period: PeriodFilter): string {
@@ -88,26 +45,9 @@ export function formatPeriodLabel(period: PeriodFilter): string {
   return monthName || 'All periods'
 }
 
-/** Exact YYYY-MM when both year + month are set; otherwise null. */
 export function exactMonthKey(period: PeriodFilter): string | null {
   if (period.year === 'all' || period.month === 'all') return null
   return `${period.year}-${period.month}`
-}
-
-/** Distinct currencies from column B. */
-export const CURRENCY_OPTIONS = ['all', ...(extract.currencies as string[])] as const
-
-export function getBrandTabsForCurrency(
-  currency: CurrencyCode | 'all',
-): { id: BrandId; label: string }[] {
-  if (currency === 'all') return BRAND_TABS
-  return [
-    { id: 'summary', label: 'Summary' },
-    ...BRAND_DATA.filter((b) => b.currencies.includes(currency)).map((b) => ({
-      id: b.id,
-      label: b.label,
-    })),
-  ]
 }
 
 export function formatMonthLabel(month: string): string {
@@ -158,152 +98,204 @@ function alignToMonths(
   )
 }
 
-function brandSeries(
-  brand: BrandData,
-  currency: CurrencyCode | 'all',
-): MonthlyMetric[] {
-  if (currency === 'all') return brand.monthlyByCurrency.ALL ?? []
-  return brand.monthlyByCurrency[currency] ?? []
+export function isReportExtract(value: unknown): value is ReportExtract {
+  if (!value || typeof value !== 'object') return false
+  const v = value as ReportExtract
+  return Boolean(v.data && v.tabOrder && v.brands && v.months && v.currencies)
 }
 
-function brandsForCurrency(currency: CurrencyCode | 'all'): BrandData[] {
-  if (currency === 'all') return BRAND_DATA
-  return BRAND_DATA.filter((b) => b.currencies.includes(currency))
-}
+export function createPerformanceApi(extract: ReportExtract) {
+  const tabOrder = extract.tabOrder
+    .filter((id) => extract.brands[id])
+    .slice()
+    .sort((a, b) => {
+      const labelA = extract.brands[a]?.label ?? a
+      const labelB = extract.brands[b]?.label ?? b
+      return labelA.localeCompare(labelB, undefined, { sensitivity: 'base' })
+    })
 
-export function getSummaryMonthly(
-  currency: CurrencyCode | 'all' = 'all',
-): MonthlyMetric[] {
-  const brands = brandsForCurrency(currency)
-  return MONTHS.map((month) => {
-    const rows = brands.flatMap((b) =>
-      brandSeries(b, currency).filter((m) => m.month === month),
-    )
-    return { ...sumMetrics(rows), month }
+  const brandTabs: { id: BrandId; label: string }[] = [
+    { id: 'summary', label: 'Summary' },
+    ...tabOrder.map((id) => ({
+      id,
+      label: extract.brands[id]?.label ?? id,
+    })),
+  ]
+
+  const brandData: BrandData[] = tabOrder.map((id) => {
+    const meta = extract.brands[id]
+    const raw = extract.data[id] ?? {}
+    return {
+      id,
+      label: meta?.label ?? id,
+      currencies: meta?.currencies ?? [],
+      monthlyByCurrency: raw,
+    }
   })
-}
 
-export function getBrandMonthly(
-  brandId: BrandId,
-  currency: CurrencyCode | 'all' = 'all',
-): MonthlyMetric[] {
-  if (brandId === 'summary') return getSummaryMonthly(currency)
-  const brand = BRAND_DATA.find((b) => b.id === brandId)
-  if (!brand) return []
-  if (currency !== 'all' && !brand.currencies.includes(currency)) {
-    return alignToMonths([], MONTHS)
+  const months = extract.months
+  const yearOptions = [
+    'all',
+    ...Array.from(
+      new Set([
+        ...months.map((m) => m.slice(0, 4)),
+        String(new Date().getFullYear()),
+      ]),
+    ).sort(),
+  ]
+  const currencyOptions = ['all', ...extract.currencies]
+
+  function brandSeries(
+    brand: BrandData,
+    currency: CurrencyCode | 'all',
+  ): MonthlyMetric[] {
+    if (currency === 'all') return brand.monthlyByCurrency.ALL ?? []
+    return brand.monthlyByCurrency[currency] ?? []
   }
-  return alignToMonths(brandSeries(brand, currency), MONTHS)
-}
 
-export function filterMonthly(
-  rows: MonthlyMetric[],
-  month: string,
-): MonthlyMetric[] {
-  if (month === 'all') return rows
-  return rows.filter((r) => r.month === month)
-}
+  function brandsForCurrency(currency: CurrencyCode | 'all'): BrandData[] {
+    if (currency === 'all') return brandData
+    return brandData.filter((b) => b.currencies.includes(currency))
+  }
 
-/** Filter by separate Year + Month dropdowns. */
-export function filterByPeriod(
-  rows: MonthlyMetric[],
-  period: PeriodFilter,
-): MonthlyMetric[] {
-  return rows.filter((r) => {
-    const [y, m] = r.month.split('-')
-    if (period.year !== 'all' && y !== period.year) return false
-    if (period.month !== 'all' && m !== period.month) return false
-    return true
-  })
-}
+  function getBrandTabsForCurrency(currency: CurrencyCode | 'all') {
+    if (currency === 'all') return brandTabs
+    return [
+      { id: 'summary', label: 'Summary' },
+      ...brandData
+        .filter((b) => b.currencies.includes(currency))
+        .map((b) => ({ id: b.id, label: b.label })),
+    ]
+  }
 
-/**
- * Zoom trend window around a selected month while keeping a visible line.
- * `pad` = months before/after the focus month (default 5 → up to 11 points).
- */
-export function zoomMonthlySeries(
-  rows: MonthlyMetric[],
-  month: string,
-  pad = 5,
-): MonthlyMetric[] {
-  if (month === 'all') return rows
-  const idx = rows.findIndex((r) => r.month === month)
-  if (idx < 0) return filterMonthly(rows, month)
-  const start = Math.max(0, idx - pad)
-  const end = Math.min(rows.length, idx + pad + 1)
-  return rows.slice(start, end)
-}
+  function getSummaryMonthly(
+    currency: CurrencyCode | 'all' = 'all',
+  ): MonthlyMetric[] {
+    const brands = brandsForCurrency(currency)
+    return months.map((month) => {
+      const rows = brands.flatMap((b) =>
+        brandSeries(b, currency).filter((m) => m.month === month),
+      )
+      return { ...sumMetrics(rows), month }
+    })
+  }
 
-/** Trend series for Year/Month filters — keeps a visible line when zoomed. */
-export function zoomByPeriod(
-  rows: MonthlyMetric[],
-  period: PeriodFilter,
-  pad = 5,
-): MonthlyMetric[] {
-  const exact = exactMonthKey(period)
-  if (exact) return zoomMonthlySeries(rows, exact, pad)
-  if (period.year === 'all' && period.month === 'all') return rows
-  // Year-only or month-only: show the filtered stretch as the zoomed view
-  const filtered = filterByPeriod(rows, period)
-  return filtered.length > 0 ? filtered : rows
-}
-
-export function getTotals(rows: MonthlyMetric[]) {
-  return sumMetrics(rows)
-}
-
-export function getRevenueByBrand(
-  month: string,
-  currency: CurrencyCode | 'all' = 'all',
-) {
-  return brandsForCurrency(currency).map((brand) => {
-    const rows = filterMonthly(brandSeries(brand, currency), month)
-    const total = sumMetrics(rows)
-    return {
-      name: brand.label,
-      value: Math.round(total.ggrUsd),
+  function getBrandMonthly(
+    brandId: BrandId,
+    currency: CurrencyCode | 'all' = 'all',
+  ): MonthlyMetric[] {
+    if (brandId === 'summary') return getSummaryMonthly(currency)
+    const brand = brandData.find((b) => b.id === brandId)
+    if (!brand) return []
+    if (currency !== 'all' && !brand.currencies.includes(currency)) {
+      return alignToMonths([], months)
     }
-  })
+    return alignToMonths(brandSeries(brand, currency), months)
+  }
+
+  function filterByPeriod(
+    rows: MonthlyMetric[],
+    period: PeriodFilter,
+  ): MonthlyMetric[] {
+    return rows.filter((r) => {
+      const [y, m] = r.month.split('-')
+      if (period.year !== 'all' && y !== period.year) return false
+      if (period.month !== 'all' && m !== period.month) return false
+      return true
+    })
+  }
+
+  function zoomMonthlySeries(
+    rows: MonthlyMetric[],
+    month: string,
+    pad = 5,
+  ): MonthlyMetric[] {
+    if (month === 'all') return rows
+    const idx = rows.findIndex((r) => r.month === month)
+    if (idx < 0) return rows.filter((r) => r.month === month)
+    const start = Math.max(0, idx - pad)
+    const end = Math.min(rows.length, idx + pad + 1)
+    return rows.slice(start, end)
+  }
+
+  function zoomByPeriod(
+    rows: MonthlyMetric[],
+    period: PeriodFilter,
+    pad = 5,
+  ): MonthlyMetric[] {
+    const exact = exactMonthKey(period)
+    if (exact) return zoomMonthlySeries(rows, exact, pad)
+    if (period.year === 'all' && period.month === 'all') return rows
+    const filtered = filterByPeriod(rows, period)
+    return filtered.length > 0 ? filtered : rows
+  }
+
+  function getTotals(rows: MonthlyMetric[]) {
+    return sumMetrics(rows)
+  }
+
+  function getRevenueByBrandPeriod(
+    period: PeriodFilter,
+    currency: CurrencyCode | 'all' = 'all',
+  ) {
+    return brandsForCurrency(currency).map((brand) => {
+      const rows = filterByPeriod(brandSeries(brand, currency), period)
+      const total = sumMetrics(rows)
+      return {
+        name: brand.label,
+        value: Math.round(total.ggrUsd),
+      }
+    })
+  }
+
+  function getTrafficByBrandPeriod(
+    period: PeriodFilter,
+    currency: CurrencyCode | 'all' = 'all',
+  ) {
+    return brandsForCurrency(currency).map((brand) => {
+      const rows = filterByPeriod(brandSeries(brand, currency), period)
+      const total = sumMetrics(rows)
+      return {
+        name: brand.label,
+        value: total.impressions,
+      }
+    })
+  }
+
+  return {
+    dataSource: extract.source,
+    brandTabs,
+    brandData,
+    months,
+    yearOptions,
+    currencyOptions,
+    getBrandTabsForCurrency,
+    getBrandMonthly,
+    filterByPeriod,
+    zoomByPeriod,
+    getTotals,
+    getRevenueByBrandPeriod,
+    getTrafficByBrandPeriod,
+  }
 }
 
-export function getRevenueByBrandPeriod(
-  period: PeriodFilter,
-  currency: CurrencyCode | 'all' = 'all',
-) {
-  return brandsForCurrency(currency).map((brand) => {
-    const rows = filterByPeriod(brandSeries(brand, currency), period)
-    const total = sumMetrics(rows)
-    return {
-      name: brand.label,
-      value: Math.round(total.ggrUsd),
-    }
-  })
+export type PerformanceApi = ReturnType<typeof createPerformanceApi>
+
+/** Empty extract — used when no Excel has been uploaded / after delete. */
+export const EMPTY_EXTRACT: ReportExtract = {
+  source: 'No data uploaded',
+  extractedAt: new Date(0).toISOString(),
+  months: [],
+  currencies: [],
+  brands: {},
+  tabOrder: [],
+  data: {},
 }
 
-export function getTrafficByBrand(
-  month: string,
-  currency: CurrencyCode | 'all' = 'all',
-) {
-  return brandsForCurrency(currency).map((brand) => {
-    const rows = filterMonthly(brandSeries(brand, currency), month)
-    const total = sumMetrics(rows)
-    return {
-      name: brand.label,
-      value: total.impressions,
-    }
-  })
-}
+export const defaultPerformanceApi = createPerformanceApi(EMPTY_EXTRACT)
 
-export function getTrafficByBrandPeriod(
-  period: PeriodFilter,
-  currency: CurrencyCode | 'all' = 'all',
-) {
-  return brandsForCurrency(currency).map((brand) => {
-    const rows = filterByPeriod(brandSeries(brand, currency), period)
-    const total = sumMetrics(rows)
-    return {
-      name: brand.label,
-      value: total.impressions,
-    }
-  })
-}
+/** Kept for FiltersBar option lists / legacy imports. */
+export const YEAR_OPTIONS = defaultPerformanceApi.yearOptions
+export const CURRENCY_OPTIONS = defaultPerformanceApi.currencyOptions
+export const BRAND_TABS = defaultPerformanceApi.brandTabs
+export const DATA_SOURCE = defaultPerformanceApi.dataSource

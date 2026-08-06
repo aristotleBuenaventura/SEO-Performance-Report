@@ -1,23 +1,5 @@
-export type BrandId =
-  | 'summary'
-  | 'mcw'
-  | 'mxw'
-  | 'banglabet'
-  | 'bengalbet'
-  | 'khela'
-  | 'banglaslots'
-  | 'banglawin'
-  | 'ga888'
-  | 'tkbaazi'
-  | 'banglaplus'
-  | 'joywin'
-  | 'ncvip'
-  | 'mnlbet'
-  | 'cf789'
-  | 'bpm'
-  | 'ads'
-  | 'blackhat'
-  | 'phishing'
+/** Brand tab id — 'summary' or a sheet-derived brand key. */
+export type BrandId = string
 
 /** Base currency codes from Excel column B (CCY). */
 export type CurrencyCode = string
@@ -42,4 +24,24 @@ export interface DashboardFilters {
   month: string // 'all' | YYYY-MM
   brand: BrandId
   currency: CurrencyCode | 'all'
+}
+
+export interface ReportExtract {
+  source: string
+  extractedAt?: string
+  uploadedAt?: string
+  uploadedBy?: string
+  rules?: {
+    monthColumn: string
+    currencyColumn: string
+  }
+  months: string[]
+  currencies: string[]
+  mapping?: Record<string, string>
+  brands: Record<
+    string,
+    { label: string; currencies: string[]; primaryCurrency?: string }
+  >
+  tabOrder: string[]
+  data: Record<string, Record<string, MonthlyMetric[]>>
 }

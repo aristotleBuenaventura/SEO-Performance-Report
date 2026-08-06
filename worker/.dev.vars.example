@@ -1,0 +1,21 @@
+# Bootstrap / create-user gate (NOT daily login). Use 16+ random chars for public.
+ADMIN_SECRET=change-me-to-a-long-random-string
+
+# Preferred HMAC key for session cookies (independent from ADMIN_SECRET).
+SESSION_SIGNING_SECRET=change-me-session-signing-secret
+
+# Public UI URL used in password-reset emails.
+APP_URL=http://localhost:5173
+
+# Gmail SMTP for forgot-password emails.
+# Use a Google App Password for SMTP_PASS — not your normal Gmail password.
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_USER=aris@casinomcw.com
+SMTP_PASS=
+SMTP_FROM=SEO Report <aris@casinomcw.com>
+
+# Local: leave PUBLIC_INTERNET unset/false so Vite proxy works without ALLOWED_ORIGINS.
+# PUBLIC_INTERNET=false
+# IP_ALLOWLIST=
+# ALLOWED_ORIGINS=

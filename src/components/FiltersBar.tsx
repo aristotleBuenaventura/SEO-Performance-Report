@@ -1,9 +1,5 @@
 import type { CurrencyCode } from '../types'
-import {
-  CALENDAR_MONTH_OPTIONS,
-  CURRENCY_OPTIONS,
-  YEAR_OPTIONS,
-} from '../data/performanceData'
+import { CALENDAR_MONTH_OPTIONS } from '../data/performanceData'
 import type { ThemeMode } from '../hooks/useTheme'
 import { FilterSelect } from './FilterSelect'
 
@@ -12,6 +8,8 @@ interface FiltersBarProps {
   month: string
   currency: CurrencyCode | 'all'
   theme: ThemeMode
+  yearOptions: string[]
+  currencyOptions: string[]
   onYearChange: (year: string) => void
   onMonthChange: (month: string) => void
   onCurrencyChange: (currency: CurrencyCode | 'all') => void
@@ -23,6 +21,8 @@ export function FiltersBar({
   month,
   currency,
   theme,
+  yearOptions,
+  currencyOptions,
   onYearChange,
   onMonthChange,
   onCurrencyChange,
@@ -36,7 +36,7 @@ export function FiltersBar({
           aria-label="Year"
           value={year}
           onChange={onYearChange}
-          options={YEAR_OPTIONS.map((y) => ({
+          options={yearOptions.map((y) => ({
             value: y,
             label: y === 'all' ? 'All years' : y,
           }))}
@@ -62,7 +62,7 @@ export function FiltersBar({
           aria-label="Currency"
           value={currency}
           onChange={(v) => onCurrencyChange(v as CurrencyCode | 'all')}
-          options={CURRENCY_OPTIONS.map((c) => ({
+          options={currencyOptions.map((c) => ({
             value: c,
             label: c === 'all' ? 'All' : c,
           }))}

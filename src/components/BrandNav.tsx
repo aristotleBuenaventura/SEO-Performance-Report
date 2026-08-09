@@ -47,8 +47,6 @@ export function BrandNav({
                 className="brand-nav__title-logo"
                 src={activeLogo}
                 alt=""
-                width={36}
-                height={36}
               />
             ) : (
               <span
@@ -93,7 +91,7 @@ export function BrandNav({
               onClick={() => onChange(tab.id)}
             >
               {tab.id === 'summary' ? (
-                <span className="brand-nav__dot" />
+                <span className="brand-nav__all">All</span>
               ) : logo ? (
                 <img className="brand-nav__logo" src={logo} alt="" />
               ) : (
@@ -103,9 +101,6 @@ export function BrandNav({
                 />
               )}
               <span className="brand-nav__name">{tab.label}</span>
-              {tab.id === 'summary' ? (
-                <span className="brand-nav__all">All</span>
-              ) : null}
             </button>
           )
         })}

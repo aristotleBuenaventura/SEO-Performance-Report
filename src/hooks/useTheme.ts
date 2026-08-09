@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 
 export type ThemeMode = 'dark' | 'light'
 
@@ -6,29 +6,39 @@ const STORAGE_KEY = 'seo-report-theme'
 
 function readStoredTheme(): ThemeMode {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored === 'light' || stored === 'dark') return stored
+    // Only honor an explicit prior choice of light.
+    // Missing / invalid / first visit → dark.
+    if (localStorage.getItem(STORAGE_KEY) === 'light') return 'light'
   } catch {
     /* ignore */
   }
   return 'dark'
 }
 
-export function useTheme() {
-  const [theme, setTheme] = useState<ThemeMode>(() => readStoredTheme())
+function applyTheme(theme: ThemeMode) {
+  document.documentElement.setAttribute('data-theme', theme)
+}
 
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme)
+export function useTheme() {
+  const [theme, setThemeState] = useState<ThemeMode>(() => {
+    const initial = readStoredTheme()
+    applyTheme(initial)
+    return initial
+  })
+
+  const setTheme = useCallback((next: ThemeMode) => {
+    applyTheme(next)
     try {
-      localStorage.setItem(STORAGE_KEY, theme)
+      localStorage.setItem(STORAGE_KEY, next)
     } catch {
       /* ignore */
     }
-  }, [theme])
+    setThemeState(next)
+  }, [])
 
-  const toggleTheme = () => {
-    setTheme((t) => (t === 'dark' ? 'light' : 'dark'))
-  }
+  const toggleTheme = useCallback(() => {
+    setTheme(theme === 'dark' ? 'light' : 'dark')
+  }, [setTheme, theme])
 
   return { theme, setTheme, toggleTheme, isDark: theme === 'dark' }
 }

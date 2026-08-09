@@ -14,6 +14,10 @@ import { TrendChart } from '../components/TrendChart'
 import { DonutChart } from '../components/DonutChart'
 import { BrandNav } from '../components/BrandNav'
 import { useTheme } from '../hooks/useTheme'
+import {
+  resolveReportFilters,
+  writeStoredReportFilters,
+} from '../lib/reportFiltersStorage'
 
 interface ReportPageProps {
   api: PerformanceApi
@@ -27,17 +31,34 @@ export function ReportPage({ api, showAdmin, onLogout }: ReportPageProps) {
     () => getLatestPeriodDefaults(api.months),
     [api.months],
   )
+
   const [year, setYear] = useState(latestPeriod.year)
   const [month, setMonth] = useState(latestPeriod.month)
   const [brand, setBrand] = useState<BrandId>('summary')
   const [currency, setCurrency] = useState<CurrencyCode | 'all'>('all')
+  const [hydrated, setHydrated] = useState(false)
 
-  // First load / when Excel data changes: Summary + latest year-month in the file.
+  // Restore saved filters once (and again when Excel data source changes).
   useEffect(() => {
-    setYear(latestPeriod.year)
-    setMonth(latestPeriod.month)
-    setBrand('summary')
-  }, [api.dataSource, latestPeriod.year, latestPeriod.month])
+    const next = resolveReportFilters({
+      months: api.months,
+      yearOptions: api.yearOptions,
+      currencyOptions: api.currencyOptions,
+      brandIds: api.brandTabs.map((t) => t.id),
+      latest: latestPeriod,
+    })
+    setYear(next.year)
+    setMonth(next.month)
+    setBrand(next.brand)
+    setCurrency(next.currency)
+    setHydrated(true)
+  }, [api.dataSource, latestPeriod.year, latestPeriod.month, api])
+
+  // Persist selection across refresh (after hydration so we don't overwrite storage with defaults).
+  useEffect(() => {
+    if (!hydrated) return
+    writeStoredReportFilters({ brand, year, month, currency })
+  }, [hydrated, brand, year, month, currency])
 
   const period: PeriodFilter = useMemo(
     () => ({ year, month }),

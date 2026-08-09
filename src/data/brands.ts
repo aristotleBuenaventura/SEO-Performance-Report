@@ -17,11 +17,11 @@ export interface BrandDefinition {
 
 export const BRAND_DEFINITIONS: readonly BrandDefinition[] = [
   { code: 'MCW', id: 'mcw', label: 'Mega Casino World', logo: 'mcw-.png' },
-  { code: 'MXW', id: 'mxw', label: 'Mega Cricket World', logo: null },
+  { code: 'MXW', id: 'mxw', label: 'Mega Cricket World', logo: 'mxw.png' },
   { code: 'B1', id: 'b1', label: 'Banglabet', logo: 'b1.png' },
   { code: 'B2', id: 'b2', label: 'Bengalbet', logo: 'b2.png' },
   { code: 'K1', id: 'k1', label: 'Khelaghor', logo: 'k1.png' },
-  { code: 'B3', id: 'b3', label: 'Banglaslot', logo: null },
+  { code: 'B3', id: 'b3', label: 'Deshislots', logo: 'deshislots.png' },
   { code: 'B4', id: 'b4', label: 'Banglawin', logo: 'b4.png' },
   { code: 'G1', id: 'g1', label: 'Ga888', logo: 'g1.png' },
   { code: 'TK', id: 'tk', label: 'Tkbaazi', logo: 'tk.png' },

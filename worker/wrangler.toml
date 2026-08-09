@@ -13,6 +13,8 @@ preview_id = "00000000000000000000000000000001"
 PUBLIC_INTERNET = "false"
 COOKIE_SAMESITE = "Lax"
 APP_URL = "http://localhost:5173"
+# Gmail SMTP for forgot-password (same pattern as Bulk301 / MR Database Tool).
+# SMTP_PASS is a secret — never commit it (wrangler secret put SMTP_PASS / .dev.vars).
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = "465"
 SMTP_USER = "aris@casinomcw.com"
@@ -20,4 +22,7 @@ SMTP_FROM = "SEO Report <aris@casinomcw.com>"
 
 # Secrets (set via CLI — never commit):
 #   npx wrangler secret put ADMIN_SECRET
+#   npx wrangler secret put SESSION_SIGNING_SECRET
 #   npx wrangler secret put SMTP_PASS
+# Local: copy worker/.dev.vars.example → worker/.dev.vars and set SMTP_PASS
+#       (same Google App Password as Bulk301).

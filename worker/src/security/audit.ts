@@ -21,6 +21,8 @@ export type AuditAction =
   | 'password_reset_requested'
   | 'password_reset_failed'
   | 'password_reset_success'
+  | 'report_upload'
+  | 'report_delete'
 
 export interface AuditEvent {
   id: string

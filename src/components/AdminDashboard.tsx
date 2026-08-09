@@ -4,12 +4,14 @@ import {
   createAdminUser,
   deleteAdminUser,
   deleteReportExtract,
+  fetchAuditLog,
   fetchReportExtractMeta,
   fetchSessionMe,
   forceLogoutAdminUser,
   listAdminUsers,
   resetAdminUserPassword,
   uploadReportExtract,
+  type AuditEvent,
   type ManagedUser,
   type ReportExtractMeta,
   type WorkerSession,
@@ -44,6 +46,88 @@ function initials(email: string) {
   return email.slice(0, 2).toUpperCase() || '?'
 }
 
+type AuditTab = 'login' | 'excel'
+
+function isLoginAction(action: string) {
+  return (
+    action.startsWith('login_') ||
+    action.startsWith('2fa_') ||
+    action === 'logout' ||
+    action === 'session_idle_expired' ||
+    action === 'session_force_logout' ||
+    action.startsWith('password_reset_')
+  )
+}
+
+function isExcelAction(action: string, detail?: string) {
+  if (action === 'report_upload' || action === 'report_delete') return true
+  // Legacy events logged as config_saved before dedicated actions existed
+  if (
+    action === 'config_saved' &&
+    detail &&
+    /report-extract-(upload|deleted)/i.test(detail)
+  ) {
+    return true
+  }
+  return false
+}
+
+function actionLabel(action: string) {
+  switch (action) {
+    case 'login_success':
+      return 'Login success'
+    case 'login_failed':
+      return 'Login failed'
+    case 'login_locked':
+      return 'Login locked'
+    case 'login_rate_limited':
+      return 'Rate limited'
+    case 'login_ip_blocked':
+      return 'IP blocked'
+    case '2fa_required':
+      return '2FA required'
+    case '2fa_success':
+      return '2FA success'
+    case '2fa_failed':
+      return '2FA failed'
+    case '2fa_setup_started':
+      return '2FA setup started'
+    case '2fa_enabled':
+      return '2FA enabled'
+    case '2fa_disabled':
+      return '2FA disabled'
+    case 'logout':
+      return 'Logout'
+    case 'session_idle_expired':
+      return 'Session idle expired'
+    case 'session_force_logout':
+      return 'Force logout'
+    case 'password_reset_requested':
+      return 'Password reset requested'
+    case 'password_reset_failed':
+      return 'Password reset failed'
+    case 'password_reset_success':
+      return 'Password reset success'
+    case 'report_upload':
+      return 'Excel uploaded'
+    case 'report_delete':
+      return 'Excel deleted'
+    case 'config_saved':
+      return 'Excel updated'
+    default:
+      return action.replace(/_/g, ' ')
+  }
+}
+
+function actorFromEvent(ev: AuditEvent): string | null {
+  if (ev.actor) return ev.actor
+  if (!ev.detail) return null
+  const emailMatch = ev.detail.match(
+    /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/,
+  )
+  return emailMatch?.[1]?.toLowerCase() || null
+}
+
 function IconUpload() {
   return (
     <svg viewBox="0 0 24 24" width="28" height="28" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -76,6 +160,17 @@ function IconSheet() {
   )
 }
 
+function IconAudit() {
+  return (
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+      <path d="M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v0a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z" />
+      <path d="M9 12h6" />
+      <path d="M9 16h4" />
+    </svg>
+  )
+}
+
 export function AdminDashboard({
   session,
   onLogout,
@@ -103,6 +198,12 @@ export function AdminDashboard({
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+
+  const [auditEvents, setAuditEvents] = useState<AuditEvent[]>([])
+  const [auditLoading, setAuditLoading] = useState(true)
+  const [auditRefreshing, setAuditRefreshing] = useState(false)
+  const [auditError, setAuditError] = useState<string | null>(null)
+  const [auditTab, setAuditTab] = useState<AuditTab>('login')
 
   useEffect(() => {
     let cancelled = false
@@ -161,15 +262,49 @@ export function AdminDashboard({
     }
   }, [session])
 
+  const loadAudit = useCallback(async () => {
+    setAuditRefreshing(true)
+    try {
+      const events = await fetchAuditLog(session)
+      setAuditEvents(events)
+      setAuditError(null)
+    } catch (err) {
+      setAuditError(
+        err instanceof Error ? err.message : 'Failed to load audit log',
+      )
+    } finally {
+      setAuditLoading(false)
+      setAuditRefreshing(false)
+    }
+  }, [session])
+
   useEffect(() => {
     if (!allowed) return
     void loadUsers()
     void loadMeta()
-  }, [allowed, loadUsers, loadMeta])
+    void loadAudit()
+  }, [allowed, loadUsers, loadMeta, loadAudit])
 
   const onlineCount = useMemo(
     () => users.filter((u) => u.online).length,
     [users],
+  )
+
+  const filteredAudit = useMemo(() => {
+    return auditEvents.filter((ev) => {
+      if (auditTab === 'login') return isLoginAction(ev.action)
+      return isExcelAction(ev.action, ev.detail)
+    })
+  }, [auditEvents, auditTab])
+
+  const loginCount = useMemo(
+    () => auditEvents.filter((e) => isLoginAction(e.action)).length,
+    [auditEvents],
+  )
+  const excelCount = useMemo(
+    () =>
+      auditEvents.filter((e) => isExcelAction(e.action, e.detail)).length,
+    [auditEvents],
   )
 
   async function handleCreate(e: FormEvent) {
@@ -256,6 +391,7 @@ export function AdminDashboard({
         `Uploaded ${file.name} · ${result.brands} brands · ${extract.months.length} months`,
       )
       await loadMeta()
+      await loadAudit()
       await onExtractUploaded?.()
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Upload failed')
@@ -277,6 +413,7 @@ export function AdminDashboard({
       setConfirmDelete(false)
       setUploadNotice(result.message)
       await loadMeta()
+      await loadAudit()
       await onExtractUploaded?.()
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : 'Delete failed')
@@ -429,6 +566,12 @@ export function AdminDashboard({
             <div className="meta-chip">
               <span>Uploaded</span>
               <strong>{meta?.uploadedAt ? formatWhen(meta.uploadedAt) : '—'}</strong>
+            </div>
+            <div className="meta-chip">
+              <span>Uploaded by</span>
+              <strong title={meta?.uploadedBy || undefined}>
+                {meta?.uploadedBy || '—'}
+              </strong>
             </div>
             <div className="meta-chip">
               <span>Coverage</span>
@@ -632,7 +775,7 @@ export function AdminDashboard({
                         disabled={busyEmail === user.email}
                         onClick={() => setPasswordEmail(user.email)}
                       >
-                        Reset pw
+                        Reset Password
                       </button>
                       {user.role !== 'superadmin' && (
                         <>
@@ -642,7 +785,7 @@ export function AdminDashboard({
                             disabled={busyEmail === user.email}
                             onClick={() => void handleForceLogout(user)}
                           >
-                            Kick
+                            Logout
                           </button>
                           <button
                             type="button"
@@ -663,6 +806,90 @@ export function AdminDashboard({
               <p className="empty-report">No accounts yet.</p>
             ) : null}
           </div>
+        </section>
+
+        <section className="admin-card admin-card--wide admin-audit">
+          <div className="admin-card__head">
+            <div className="admin-card__title">
+              <span className="admin-card__icon" aria-hidden="true">
+                <IconAudit />
+              </span>
+              <div>
+                <h2>Audit logs</h2>
+                <p>Login activity and who uploaded or deleted Excel data</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              className="ghost-btn"
+              disabled={auditRefreshing}
+              onClick={() => void loadAudit()}
+            >
+              {auditRefreshing ? 'Refreshing…' : 'Refresh'}
+            </button>
+          </div>
+
+          <div className="admin-audit-tabs" role="tablist" aria-label="Audit filters">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={auditTab === 'login'}
+              className={`admin-audit-tab${auditTab === 'login' ? ' is-active' : ''}`}
+              onClick={() => setAuditTab('login')}
+            >
+              Login <span>{loginCount}</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={auditTab === 'excel'}
+              className={`admin-audit-tab${auditTab === 'excel' ? ' is-active' : ''}`}
+              onClick={() => setAuditTab('excel')}
+            >
+              Excel <span>{excelCount}</span>
+            </button>
+          </div>
+
+          {auditError ? <p className="form-error">{auditError}</p> : null}
+
+          {auditLoading && auditEvents.length === 0 ? (
+            <p className="empty-report">Loading audit log…</p>
+          ) : filteredAudit.length === 0 ? (
+            <p className="empty-report">No events in this tab yet.</p>
+          ) : (
+            <ul className="admin-audit-list">
+              {filteredAudit.map((ev) => {
+                const actor = actorFromEvent(ev)
+                return (
+                  <li key={ev.id} className="admin-audit-item">
+                    <div className="admin-audit-item-top">
+                      <strong>{actionLabel(ev.action)}</strong>
+                      <span>{formatWhen(ev.at)}</span>
+                    </div>
+                    <div className="admin-audit-item-meta">
+                      {actor ? (
+                        <span className="admin-audit-actor">{actor}</span>
+                      ) : (
+                        <span className="admin-audit-actor is-unknown">
+                          Unknown user
+                        </span>
+                      )}
+                      <span>{ev.ip}</span>
+                    </div>
+                    {ev.changes && ev.changes.length > 0 ? (
+                      <ul className="admin-audit-changes">
+                        {ev.changes.map((change) => (
+                          <li key={`${ev.id}-${change}`}>{change}</li>
+                        ))}
+                      </ul>
+                    ) : ev.detail ? (
+                      <p className="admin-audit-detail">{ev.detail}</p>
+                    ) : null}
+                  </li>
+                )
+              })}
+            </ul>
+          )}
         </section>
       </div>
     </div>

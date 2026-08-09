@@ -1250,9 +1250,15 @@ export default {
         await appendAudit(
           env.CONFIG,
           request,
-          'config_saved',
-          `report-extract-upload by ${auth.email} source=${payload.source}`,
-          { actor: auth.email },
+          'report_upload',
+          `Uploaded ${payload.source}`,
+          {
+            actor: auth.email,
+            changes: [
+              `File: ${payload.source}`,
+              `Brands: ${Array.isArray(extract.tabOrder) ? extract.tabOrder.length : 0}`,
+            ],
+          },
         )
         const brands = Array.isArray(extract.tabOrder) ? extract.tabOrder.length : 0
         return json(request, env, {
@@ -1296,8 +1302,8 @@ export default {
         await appendAudit(
           env.CONFIG,
           request,
-          'config_saved',
-          `report-extract-deleted by ${auth.email}`,
+          'report_delete',
+          `Deleted uploaded Excel data`,
           { actor: auth.email },
         )
         return json(request, env, {

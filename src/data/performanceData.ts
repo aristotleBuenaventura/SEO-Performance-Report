@@ -6,7 +6,6 @@ import type {
   ReportExtract,
 } from '../types'
 import {
-  brandLogoUrl,
   getBrandDefinition,
   sortBrandIds,
 } from './brands'
@@ -118,20 +117,14 @@ export function createPerformanceApi(extract: ReportExtract) {
     return getBrandDefinition(id)?.label ?? fallback ?? extract.brands[id]?.label ?? id
   }
 
-  function brandLogo(id: string): string | null {
-    return brandLogoUrl(getBrandDefinition(id)?.logo ?? null)
-  }
-
   const brandTabs: {
     id: BrandId
     label: string
-    logo: string | null
   }[] = [
-    { id: 'summary', label: 'Summary', logo: null },
+    { id: 'summary', label: 'Summary' },
     ...tabOrder.map((id) => ({
       id,
       label: brandLabel(id),
-      logo: brandLogo(id),
     })),
   ]
 
@@ -174,13 +167,12 @@ export function createPerformanceApi(extract: ReportExtract) {
   function getBrandTabsForCurrency(currency: CurrencyCode | 'all') {
     if (currency === 'all') return brandTabs
     return [
-      { id: 'summary', label: 'Summary', logo: null },
+      { id: 'summary', label: 'Summary' },
       ...brandData
         .filter((b) => b.currencies.includes(currency))
         .map((b) => ({
           id: b.id,
           label: b.label,
-          logo: brandLogo(b.id),
         })),
     ]
   }

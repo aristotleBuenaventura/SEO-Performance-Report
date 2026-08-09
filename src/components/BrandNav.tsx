@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react'
 import type { BrandId } from '../types'
 import { formatNumber, formatUsd } from '../data/performanceData'
+import { brandLogoUrl } from '../data/brands'
 
 interface BrandNavProps {
-  tabs: { id: BrandId; label: string; logo?: string | null }[]
+  tabs: { id: BrandId; label: string }[]
   active: BrandId
   onChange: (brand: BrandId) => void
   impressions: number
@@ -24,8 +25,7 @@ export function BrandNav({
   currencyLabel,
 }: BrandNavProps) {
   const activeRef = useRef<HTMLButtonElement | null>(null)
-  const activeTab = tabs.find((t) => t.id === active)
-  const activeLogo = activeTab?.logo ?? null
+  const activeLogo = brandLogoUrl(active)
 
   useEffect(() => {
     activeRef.current?.scrollIntoView({
@@ -78,32 +78,37 @@ export function BrandNav({
         Brands{currencyLabel !== 'All' ? ` · ${currencyLabel}` : ''}
       </p>
       <nav className="brand-nav__list" aria-label="Brands">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            ref={tab.id === active ? activeRef : undefined}
-            className={
-              active === tab.id ? 'brand-nav__item active' : 'brand-nav__item'
-            }
-            onClick={() => onChange(tab.id)}
-          >
-            {tab.id === 'summary' ? (
-              <span className="brand-nav__dot" />
-            ) : tab.logo ? (
-              <img
-                className="brand-nav__logo"
-                src={tab.logo}
-                alt=""
-                width={32}
-                height={32}
-              />
-            ) : (
-              <span className="brand-nav__logo brand-nav__logo--empty" aria-hidden="true" />
-            )}
-            <span className="brand-nav__name">{tab.label}</span>
-          </button>
-        ))}
+        {tabs.map((tab) => {
+          const logo = brandLogoUrl(tab.id)
+          return (
+            <button
+              key={tab.id}
+              type="button"
+              ref={tab.id === active ? activeRef : undefined}
+              className={
+                active === tab.id ? 'brand-nav__item active' : 'brand-nav__item'
+              }
+              aria-label={tab.label}
+              title={tab.label}
+              onClick={() => onChange(tab.id)}
+            >
+              {tab.id === 'summary' ? (
+                <span className="brand-nav__dot" />
+              ) : logo ? (
+                <img className="brand-nav__logo" src={logo} alt="" />
+              ) : (
+                <span
+                  className="brand-nav__logo brand-nav__logo--empty"
+                  aria-hidden="true"
+                />
+              )}
+              <span className="brand-nav__name">{tab.label}</span>
+              {tab.id === 'summary' ? (
+                <span className="brand-nav__all">All</span>
+              ) : null}
+            </button>
+          )
+        })}
       </nav>
     </aside>
   )

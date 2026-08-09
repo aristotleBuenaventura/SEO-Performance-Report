@@ -2,6 +2,7 @@
  * Canonical brand list for the SEO report.
  * Excel sheets outside this set are ignored on upload.
  * Display order is fixed (not alphabetical).
+ * Logos are served from /brands/ (No-BG) in both themes.
  */
 export interface BrandDefinition {
   /** Excel sheet code, e.g. B1 */
@@ -52,7 +53,8 @@ export function getBrandDefinition(id: string): BrandDefinition | null {
   return byId.get(id) ?? null
 }
 
-export function brandLogoUrl(logo: string | null | undefined): string | null {
+export function brandLogoUrl(id: string): string | null {
+  const logo = getBrandDefinition(id)?.logo
   if (!logo) return null
   return `/brands/${logo}`
 }

@@ -4,7 +4,7 @@ import type { BrandId, CurrencyCode } from '../types'
 import {
   exactMonthKey,
   formatPeriodLabel,
-  getCurrentPeriodDefaults,
+  getLatestPeriodDefaults,
   type PerformanceApi,
   type PeriodFilter,
 } from '../data/performanceData'
@@ -23,10 +23,21 @@ interface ReportPageProps {
 
 export function ReportPage({ api, showAdmin, onLogout }: ReportPageProps) {
   const { theme, setTheme } = useTheme()
-  const [year, setYear] = useState(() => getCurrentPeriodDefaults().year)
-  const [month, setMonth] = useState(() => getCurrentPeriodDefaults().month)
+  const latestPeriod = useMemo(
+    () => getLatestPeriodDefaults(api.months),
+    [api.months],
+  )
+  const [year, setYear] = useState(latestPeriod.year)
+  const [month, setMonth] = useState(latestPeriod.month)
   const [brand, setBrand] = useState<BrandId>('summary')
   const [currency, setCurrency] = useState<CurrencyCode | 'all'>('all')
+
+  // First load / when Excel data changes: Summary + latest year-month in the file.
+  useEffect(() => {
+    setYear(latestPeriod.year)
+    setMonth(latestPeriod.month)
+    setBrand('summary')
+  }, [api.dataSource, latestPeriod.year, latestPeriod.month])
 
   const period: PeriodFilter = useMemo(
     () => ({ year, month }),

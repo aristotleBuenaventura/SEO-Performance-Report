@@ -3,7 +3,7 @@ import type { BrandId } from '../types'
 import { formatNumber, formatUsd } from '../data/performanceData'
 
 interface BrandNavProps {
-  tabs: { id: BrandId; label: string }[]
+  tabs: { id: BrandId; label: string; logo?: string | null }[]
   active: BrandId
   onChange: (brand: BrandId) => void
   impressions: number
@@ -24,6 +24,8 @@ export function BrandNav({
   currencyLabel,
 }: BrandNavProps) {
   const activeRef = useRef<HTMLButtonElement | null>(null)
+  const activeTab = tabs.find((t) => t.id === active)
+  const activeLogo = activeTab?.logo ?? null
 
   useEffect(() => {
     activeRef.current?.scrollIntoView({
@@ -37,7 +39,25 @@ export function BrandNav({
     <aside className="brand-nav">
       <div className="brand-nav__totals">
         <p className="brand-nav__eyebrow">Active view</p>
-        <h2>{brandLabel}</h2>
+        <h2 className="brand-nav__title">
+          <span className="brand-nav__title-text">{brandLabel}</span>
+          {active !== 'summary' ? (
+            activeLogo ? (
+              <img
+                className="brand-nav__title-logo"
+                src={activeLogo}
+                alt=""
+                width={36}
+                height={36}
+              />
+            ) : (
+              <span
+                className="brand-nav__title-logo brand-nav__title-logo--empty"
+                aria-hidden="true"
+              />
+            )
+          ) : null}
+        </h2>
         <dl className="brand-nav__stats">
           <div>
             <dt>Impressions</dt>
@@ -63,11 +83,25 @@ export function BrandNav({
             key={tab.id}
             type="button"
             ref={tab.id === active ? activeRef : undefined}
-            className={active === tab.id ? 'brand-nav__item active' : 'brand-nav__item'}
+            className={
+              active === tab.id ? 'brand-nav__item active' : 'brand-nav__item'
+            }
             onClick={() => onChange(tab.id)}
           >
-            <span className="brand-nav__dot" />
-            {tab.label}
+            {tab.id === 'summary' ? (
+              <span className="brand-nav__dot" />
+            ) : tab.logo ? (
+              <img
+                className="brand-nav__logo"
+                src={tab.logo}
+                alt=""
+                width={32}
+                height={32}
+              />
+            ) : (
+              <span className="brand-nav__logo brand-nav__logo--empty" aria-hidden="true" />
+            )}
+            <span className="brand-nav__name">{tab.label}</span>
           </button>
         ))}
       </nav>

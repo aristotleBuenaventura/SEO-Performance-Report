@@ -5,6 +5,11 @@ import type {
   MonthlyMetric,
   ReportExtract,
 } from '../types'
+import {
+  brandLogoUrl,
+  getBrandDefinition,
+  sortBrandIds,
+} from './brands'
 
 export interface PeriodFilter {
   year: string // 'all' | 'YYYY'
@@ -27,10 +32,10 @@ export const CALENDAR_MONTH_OPTIONS = [
   { value: '12', label: 'December' },
 ] as const
 
-export function getCurrentPeriodDefaults(): PeriodFilter {
-  const now = new Date()
-  const year = String(now.getFullYear())
-  const month = String(now.getMonth() + 1).padStart(2, '0')
+export function getLatestPeriodDefaults(months: string[]): PeriodFilter {
+  if (!months.length) return { year: 'all', month: 'all' }
+  const latest = months.reduce((a, b) => (a > b ? a : b))
+  const [year, month] = latest.split('-')
   return { year, month }
 }
 
@@ -105,20 +110,28 @@ export function isReportExtract(value: unknown): value is ReportExtract {
 }
 
 export function createPerformanceApi(extract: ReportExtract) {
-  const tabOrder = extract.tabOrder
-    .filter((id) => extract.brands[id])
-    .slice()
-    .sort((a, b) => {
-      const labelA = extract.brands[a]?.label ?? a
-      const labelB = extract.brands[b]?.label ?? b
-      return labelA.localeCompare(labelB, undefined, { sensitivity: 'base' })
-    })
+  const tabOrder = sortBrandIds(
+    extract.tabOrder.filter((id) => extract.brands[id] || extract.data[id]),
+  )
 
-  const brandTabs: { id: BrandId; label: string }[] = [
-    { id: 'summary', label: 'Summary' },
+  function brandLabel(id: string, fallback?: string): string {
+    return getBrandDefinition(id)?.label ?? fallback ?? extract.brands[id]?.label ?? id
+  }
+
+  function brandLogo(id: string): string | null {
+    return brandLogoUrl(getBrandDefinition(id)?.logo ?? null)
+  }
+
+  const brandTabs: {
+    id: BrandId
+    label: string
+    logo: string | null
+  }[] = [
+    { id: 'summary', label: 'Summary', logo: null },
     ...tabOrder.map((id) => ({
       id,
-      label: extract.brands[id]?.label ?? id,
+      label: brandLabel(id),
+      logo: brandLogo(id),
     })),
   ]
 
@@ -127,7 +140,7 @@ export function createPerformanceApi(extract: ReportExtract) {
     const raw = extract.data[id] ?? {}
     return {
       id,
-      label: meta?.label ?? id,
+      label: brandLabel(id, meta?.label),
       currencies: meta?.currencies ?? [],
       monthlyByCurrency: raw,
     }
@@ -161,10 +174,14 @@ export function createPerformanceApi(extract: ReportExtract) {
   function getBrandTabsForCurrency(currency: CurrencyCode | 'all') {
     if (currency === 'all') return brandTabs
     return [
-      { id: 'summary', label: 'Summary' },
+      { id: 'summary', label: 'Summary', logo: null },
       ...brandData
         .filter((b) => b.currencies.includes(currency))
-        .map((b) => ({ id: b.id, label: b.label })),
+        .map((b) => ({
+          id: b.id,
+          label: b.label,
+          logo: brandLogo(b.id),
+        })),
     ]
   }
 

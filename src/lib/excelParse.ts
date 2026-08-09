@@ -1,5 +1,10 @@
 import * as XLSX from 'xlsx'
 import type { MonthlyMetric } from '../types'
+import {
+  brandFromSheetName,
+  isAllowedBrandSheet,
+  sortBrandIds,
+} from '../data/brands'
 
 export interface ExcelExtract {
   source: string
@@ -21,34 +26,15 @@ export interface ExcelExtract {
 
 type SchemaKind = 'brand' | 'ads' | 'phishing'
 
-/**
- * Brand sheets only (as in the SEO workbook tabs).
- * Other sheets (Summary, Ads, Blackhat, Phishing, BPM, …) are ignored.
- */
-const BRAND_SHEETS = new Set([
-  'MCW',
-  'B1',
-  'B2',
-  'K1',
-  'B3',
-  'B4',
-  'G1',
-  'TK',
-  'BP',
-  'JW',
-  'NCVIP',
-  'M3',
-  'C1',
-])
-
 function isBrandSheet(sheetName: string): boolean {
-  return BRAND_SHEETS.has(sheetName.trim())
+  return isAllowedBrandSheet(sheetName)
 }
 
-/** Brand identity comes only from the Excel sheet name. */
-function brandFromSheetName(sheetName: string): { id: string; label: string } {
-  const label = sheetName.trim() || 'Sheet'
-  return { id: slugify(label), label }
+/** Brand identity comes from the Excel sheet code → canonical registry. */
+function resolveBrand(sheetName: string): { id: string; label: string } | null {
+  const def = brandFromSheetName(sheetName)
+  if (!def) return null
+  return { id: def.id, label: def.label }
 }
 
 function schemaForSheet(name: string): SchemaKind {
@@ -58,18 +44,13 @@ function schemaForSheet(name: string): SchemaKind {
   return 'brand'
 }
 
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '') || 'sheet'
-}
-
 function parseMonth(value: unknown): string | null {
   if (value == null || value === '') return null
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
-    const y = value.getUTCFullYear()
-    const m = String(value.getUTCMonth() + 1).padStart(2, '0')
+    // sheet_to_json(cellDates) yields local-midnight Dates; UTC getters
+    // shift PH/UTC+ timezones back one calendar day (May 1 → Apr 30).
+    const y = value.getFullYear()
+    const m = String(value.getMonth() + 1).padStart(2, '0')
     return `${y}-${m}`
   }
   if (typeof value === 'number' && Number.isFinite(value)) {
@@ -182,6 +163,74 @@ function aggregateRows(
   return out
 }
 
+/** Excel monthly footers: month serial in GGR col, SUM(Sstart:Send) in GGR USD. */
+function parseMonthlyFooterRanges(
+  sheet: XLSX.WorkSheet,
+  matrix: (string | number | Date | null)[][],
+  ggrCol: number,
+  ggrUsdCol: number,
+): {
+  start: number
+  end: number
+  month: string
+  ggrUsd: number
+}[] {
+  let grandTotalIdx = -1
+  for (let i = 1; i < matrix.length; i++) {
+    const label = String(matrix[i]?.[0] ?? '')
+      .trim()
+      .toLowerCase()
+    if (label.includes('grand total')) {
+      grandTotalIdx = i
+      break
+    }
+  }
+  if (grandTotalIdx < 0) return []
+
+  const ranges: {
+    start: number
+    end: number
+    month: string
+    ggrUsd: number
+  }[] = []
+  for (let i = grandTotalIdx + 1; i < matrix.length; i++) {
+    const row = matrix[i] ?? []
+    const month = parseMonth(row[ggrCol])
+    if (!month) continue
+    const ggrUsd = num(row[ggrUsdCol])
+
+    const addr = XLSX.utils.encode_cell({ r: i, c: ggrUsdCol })
+    const formula = sheet[addr]?.f
+    if (typeof formula === 'string') {
+      const match = formula.match(
+        /^SUM\(\s*[A-Z]+(\d+)\s*:\s*[A-Z]+(\d+)\s*\)$/i,
+      )
+      if (match) {
+        const start = Number(match[1])
+        const end = Number(match[2])
+        if (Number.isFinite(start) && Number.isFinite(end) && end >= start) {
+          ranges.push({ start, end, month, ggrUsd })
+          continue
+        }
+      }
+    }
+    // Footer total without a parseable SUM (still authoritative for ALL).
+    ranges.push({ start: -1, end: -1, month, ggrUsd })
+  }
+  return ranges
+}
+
+function monthFromFooterRanges(
+  excelRow: number,
+  ranges: { start: number; end: number; month: string }[],
+): string | null {
+  for (const range of ranges) {
+    if (range.start < 0) continue
+    if (excelRow >= range.start && excelRow <= range.end) return range.month
+  }
+  return null
+}
+
 function parseSheet(
   sheetName: string,
   sheet: XLSX.WorkSheet,
@@ -189,8 +238,10 @@ function parseSheet(
   id: string
   label: string
   rows: { month: string; currency: string; impressions: number; clicks: number; ggrUsd: number }[]
+  footerRanges: { start: number; end: number; month: string; ggrUsd: number }[]
 } | null {
-  const mapped = brandFromSheetName(sheetName)
+  const mapped = resolveBrand(sheetName)
+  if (!mapped) return null
   const kind = schemaForSheet(sheetName)
   const cols = colIndexes(kind)
   const matrix = XLSX.utils.sheet_to_json<(string | number | Date | null)[]>(
@@ -198,6 +249,13 @@ function parseSheet(
     { header: 1, defval: null, raw: true },
   )
   if (matrix.length < 2) return null
+
+  // Brand GGR is col R (17); prefer footer SUM ranges so month labels match
+  // Excel's monthly GGR USD subtotals (also corrects wrong years in col A).
+  const footerRanges =
+    kind === 'brand'
+      ? parseMonthlyFooterRanges(sheet, matrix, 17, cols.ggrUsd)
+      : []
 
   let carryMonth: string | null = null
   let carryCcy: string | null = null
@@ -214,14 +272,32 @@ function parseSheet(
     const monthCell = row[0]
     const ccyCell = row[1]
 
-    if (isFooterLabel(monthCell) && !parseMonth(monthCell)) continue
+    // Grand Total + monthly GGR USD subtotals sit after data rows.
+    // Subtotals store the month serial in GGR (col R) with empty A/B/C/D —
+    // without this stop they are carry-forwarded into the last month and
+    // inflate Revenue · GGR USD (often 20–30×).
+    if (isFooterLabel(monthCell) && !parseMonth(monthCell)) break
+
+    const website = row[2]
+    const name = row[3]
+    const hasIdentity =
+      (website != null && String(website).trim() !== '') ||
+      (name != null && String(name).trim() !== '') ||
+      baseCurrency(ccyCell) != null
+    if (!hasIdentity) continue
 
     const monthParsed = parseMonth(monthCell)
     if (monthParsed) carryMonth = monthParsed
     const ccyParsed = baseCurrency(ccyCell)
     if (ccyParsed) carryCcy = ccyParsed
 
-    if (!carryMonth || !carryCcy) continue
+    const excelRow = i + 1
+    const footerMonth = monthFromFooterRanges(excelRow, footerRanges)
+    // Keep orphan gap rows (between Excel monthly SUM ranges) via carry-forward
+    // so all-time totals match Excel Grand Total (SUM of every data row).
+    const month = footerMonth ?? carryMonth
+
+    if (!month || !carryCcy) continue
 
     // Skip pure total rows that still have a month label
     const nameCell = String(row[2] ?? row[3] ?? '').toLowerCase()
@@ -233,7 +309,7 @@ function parseSheet(
     if (impressions === 0 && clicks === 0 && ggrUsd === 0) continue
 
     rows.push({
-      month: carryMonth,
+      month,
       currency: carryCcy,
       impressions,
       clicks,
@@ -241,7 +317,7 @@ function parseSheet(
     })
   }
 
-  return { id: mapped.id, label: mapped.label, rows }
+  return { id: mapped.id, label: mapped.label, rows, footerRanges }
 }
 
 /** Parse a full SEO Performance workbook into the dashboard extract shape. */
@@ -284,11 +360,7 @@ export async function parseSeoExcelFile(file: File): Promise<ExcelExtract> {
     throw new Error('No brand sheets with data were found in this workbook.')
   }
 
-  tabOrder.sort((a, b) => {
-    const labelA = brands[a]?.label ?? a
-    const labelB = brands[b]?.label ?? b
-    return labelA.localeCompare(labelB, undefined, { sensitivity: 'base' })
-  })
+  const ordered = sortBrandIds(tabOrder)
 
   return {
     source: file.name,
@@ -301,7 +373,7 @@ export async function parseSeoExcelFile(file: File): Promise<ExcelExtract> {
     currencies: Array.from(currencies).sort(),
     mapping,
     brands,
-    tabOrder,
+    tabOrder: ordered,
     data,
   }
 }

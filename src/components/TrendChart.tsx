@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import {
   CartesianGrid,
   Legend,
@@ -24,6 +25,8 @@ interface TrendChartProps {
   theme?: 'dark' | 'light'
 }
 
+type ChartRow = MonthlyMetric & { label: string }
+
 function axisLabel(month: string) {
   const [y, m] = month.split('-')
   const names = [
@@ -34,6 +37,24 @@ function axisLabel(month: string) {
   return `${names[idx] ?? m} ${y.slice(2)}`
 }
 
+function useIsMobile(maxWidth = 900) {
+  const [mobile, setMobile] = useState(() =>
+    typeof window !== 'undefined'
+      ? window.matchMedia(`(max-width: ${maxWidth}px)`).matches
+      : false,
+  )
+
+  useEffect(() => {
+    const mq = window.matchMedia(`(max-width: ${maxWidth}px)`)
+    const onChange = () => setMobile(mq.matches)
+    onChange()
+    mq.addEventListener('change', onChange)
+    return () => mq.removeEventListener('change', onChange)
+  }, [maxWidth])
+
+  return mobile
+}
+
 export function TrendChart({
   data,
   zoomedMonth = null,
@@ -42,6 +63,9 @@ export function TrendChart({
 }: TrendChartProps) {
   const zoomed = Boolean(zoomLabel) || Boolean(zoomedMonth)
   const axis = chartAxisColor(theme)
+  const isMobile = useIsMobile()
+  const [activeRow, setActiveRow] = useState<ChartRow | null>(null)
+
   const chartData = data.map((row) => ({
     ...row,
     label: axisLabel(row.month),
@@ -51,6 +75,11 @@ export function TrendChart({
     zoomedMonth != null
       ? chartData.find((d) => d.month === zoomedMonth)?.label
       : undefined
+
+  // Clear sticky mobile readout when data set changes
+  useEffect(() => {
+    setActiveRow(null)
+  }, [data, zoomedMonth, zoomLabel])
 
   return (
     <div className="chart-panel trend-chart">
@@ -62,11 +91,37 @@ export function TrendChart({
             : 'All months · Impressions · Clicks · GGR USD'}
         </p>
       </div>
+
+      {isMobile && activeRow ? (
+        <div className="trend-chart__readout" aria-live="polite">
+          <strong>{formatMonthLabel(activeRow.month)}</strong>
+          <span className="trend-chart__readout-clicks">
+            Clicks {formatNumber(activeRow.clicks)}
+          </span>
+          <span className="trend-chart__readout-ggr">
+            GGR USD {formatUsd(activeRow.ggrUsd)}
+          </span>
+          <span className="trend-chart__readout-impr">
+            Impressions {formatNumber(activeRow.impressions)}
+          </span>
+        </div>
+      ) : null}
+
       <div className="chart-body">
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={chartData}
             margin={{ top: 12, right: 8, left: 0, bottom: zoomed ? 8 : 4 }}
+            onMouseMove={(state) => {
+              if (!isMobile) return
+              const row = state?.activePayload?.[0]?.payload as
+                | ChartRow
+                | undefined
+              if (row?.month) setActiveRow(row)
+            }}
+            onMouseLeave={() => {
+              if (isMobile) setActiveRow(null)
+            }}
           >
             <CartesianGrid stroke={chartGridColor(theme)} vertical={false} />
             <XAxis
@@ -113,6 +168,8 @@ export function TrendChart({
               }
             />
             <Tooltip
+              // Mobile: hide floating overlay — data shows in readout strip above chart
+              content={isMobile ? () => null : undefined}
               contentStyle={chartTooltipStyle(theme)}
               labelFormatter={(_, payload) => {
                 const row = payload?.[0]?.payload as MonthlyMetric | undefined

@@ -3,26 +3,25 @@ main = "src/index.ts"
 compatibility_date = "2025-07-01"
 compatibility_flags = ["nodejs_compat"]
 
-# Replace ids after: npm run kv:create (from worker/)
+# Dedicated SEO Report KV (do NOT reuse Bulk301's CONFIG namespace)
 [[kv_namespaces]]
 binding = "CONFIG"
-id = "00000000000000000000000000000001"
-preview_id = "00000000000000000000000000000001"
+id = "49f2d023060f4864a9cebb05d89923a7"
+preview_id = "201424a2a0c349d8a94e17e7d851214e"
 
 [vars]
-PUBLIC_INTERNET = "false"
-COOKIE_SAMESITE = "Lax"
-APP_URL = "http://localhost:5173"
-# Gmail SMTP for forgot-password (same pattern as Bulk301 / MR Database Tool).
-# SMTP_PASS is a secret — never commit it (wrangler secret put SMTP_PASS / .dev.vars).
+PUBLIC_INTERNET = "true"
+COOKIE_SAMESITE = "None"
+APP_URL = "https://seoperformancereports.com"
+ALLOWED_ORIGINS = "https://seoperformancereports.com"
+# Bootstrap (upsert-user) only from these IPs when PUBLIC_INTERNET=true
+IP_ALLOWLIST = "110.235.166.92,159.223.49.23"
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = "465"
 SMTP_USER = "aris@casinomcw.com"
 SMTP_FROM = "SEO Report <aris@casinomcw.com>"
 
-# Secrets (set via CLI — never commit):
+# Secrets (never commit):
 #   npx wrangler secret put ADMIN_SECRET
 #   npx wrangler secret put SESSION_SIGNING_SECRET
 #   npx wrangler secret put SMTP_PASS
-# Local: copy worker/.dev.vars.example → worker/.dev.vars and set SMTP_PASS
-#       (same Google App Password as Bulk301).

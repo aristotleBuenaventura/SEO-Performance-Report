@@ -38,7 +38,7 @@ export function FiltersBar({
           onChange={onYearChange}
           options={yearOptions.map((y) => ({
             value: y,
-            label: y === 'all' ? 'All years' : y,
+            label: y === 'all' ? 'All' : y,
           }))}
         />
       </label>

@@ -201,13 +201,13 @@ export function ReportPage({ api, showAdmin, onLogout }: ReportPageProps) {
             />
             <div className="side-charts">
               <DonutChart
-                title="Revenue mix"
+                title="GGR USD"
                 data={revenuePie}
                 mode="usd"
                 theme={theme}
               />
               <DonutChart
-                title="Traffic mix"
+                title="Traffic"
                 data={trafficPie}
                 mode="count"
                 credit="Developed by Aris"

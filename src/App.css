@@ -33,11 +33,11 @@
 .topbar__logo {
   width: 40px;
   height: 40px;
-  object-fit: contain;
+  object-fit: cover;
   border-radius: 10px;
   flex-shrink: 0;
-  background: #050a18;
-  box-shadow: 0 0 20px rgba(212, 175, 55, 0.25);
+  background: transparent;
+  box-shadow: 0 2px 10px rgba(109, 40, 217, 0.35);
 }
 
 .topbar h1 {

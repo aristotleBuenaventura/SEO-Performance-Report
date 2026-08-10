@@ -16,7 +16,7 @@ export interface PeriodFilter {
 }
 
 export const CALENDAR_MONTH_OPTIONS = [
-  { value: 'all', label: 'All months' },
+  { value: 'all', label: 'All' },
   { value: '01', label: 'January' },
   { value: '02', label: 'February' },
   { value: '03', label: 'March' },
@@ -55,7 +55,7 @@ export function exactMonthKey(period: PeriodFilter): string | null {
 }
 
 export function formatMonthLabel(month: string): string {
-  if (month === 'all') return 'All months'
+  if (month === 'all') return 'All'
   const [y, m] = month.split('-')
   const names = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',

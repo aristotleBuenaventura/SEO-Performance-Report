@@ -114,10 +114,15 @@ export function TrendChart({
             margin={{ top: 12, right: 8, left: 0, bottom: zoomed ? 8 : 4 }}
             onMouseMove={(state) => {
               if (!isMobile) return
-              const row = state?.activePayload?.[0]?.payload as
-                | ChartRow
-                | undefined
-              if (row?.month) setActiveRow(row)
+              const idx = state?.activeTooltipIndex ?? state?.activeIndex
+              if (typeof idx === 'number' && chartData[idx]) {
+                setActiveRow(chartData[idx]!)
+                return
+              }
+              if (state?.activeLabel != null) {
+                const row = chartData.find((d) => d.label === String(state.activeLabel))
+                if (row) setActiveRow(row)
+              }
             }}
             onMouseLeave={() => {
               if (isMobile) setActiveRow(null)

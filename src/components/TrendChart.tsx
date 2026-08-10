@@ -88,7 +88,7 @@ export function TrendChart({
         <p>
           {zoomed
             ? `Zoomed · ${zoomLabel ?? formatMonthLabel(zoomedMonth!)}`
-            : 'All months · Impressions · Clicks · GGR USD'}
+            : 'All months · Clicks · Impressions · GGR USD'}
         </p>
       </div>
 
@@ -98,11 +98,11 @@ export function TrendChart({
           <span className="trend-chart__readout-clicks">
             Clicks {formatNumber(activeRow.clicks)}
           </span>
-          <span className="trend-chart__readout-ggr">
-            GGR USD {formatUsd(activeRow.ggrUsd)}
-          </span>
           <span className="trend-chart__readout-impr">
             Impressions {formatNumber(activeRow.impressions)}
+          </span>
+          <span className="trend-chart__readout-ggr">
+            GGR USD {formatUsd(activeRow.ggrUsd)}
           </span>
         </div>
       ) : null}
@@ -191,6 +191,12 @@ export function TrendChart({
               align="right"
               iconType="circle"
               wrapperStyle={{ fontSize: 11, paddingBottom: 4 }}
+              itemSorter={(item) => {
+                const order = ['Clicks', 'Impressions', 'GGR USD']
+                const key = String(item.value ?? '')
+                const idx = order.indexOf(key)
+                return idx === -1 ? 99 : idx
+              }}
             />
             {focusLabel ? (
               <ReferenceLine
@@ -209,21 +215,21 @@ export function TrendChart({
             <Line
               yAxisId="left"
               type="monotone"
-              dataKey="impressions"
-              name="Impressions"
-              stroke="#5b8def"
-              strokeWidth={2.5}
-              dot={zoomed ? { r: 3.5, fill: '#5b8def' } : false}
-              activeDot={{ r: 5 }}
-            />
-            <Line
-              yAxisId="left"
-              type="monotone"
               dataKey="clicks"
               name="Clicks"
               stroke="#3dd6c3"
               strokeWidth={2.5}
               dot={zoomed ? { r: 3.5, fill: '#3dd6c3' } : false}
+              activeDot={{ r: 5 }}
+            />
+            <Line
+              yAxisId="left"
+              type="monotone"
+              dataKey="impressions"
+              name="Impressions"
+              stroke="#5b8def"
+              strokeWidth={2.5}
+              dot={zoomed ? { r: 3.5, fill: '#5b8def' } : false}
               activeDot={{ r: 5 }}
             />
             <Line

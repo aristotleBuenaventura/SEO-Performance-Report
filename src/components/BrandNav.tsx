@@ -58,12 +58,12 @@ export function BrandNav({
         </h2>
         <dl className="brand-nav__stats">
           <div>
-            <dt>Impressions</dt>
-            <dd>{formatNumber(impressions)}</dd>
-          </div>
-          <div>
             <dt>Clicks</dt>
             <dd>{formatNumber(clicks)}</dd>
+          </div>
+          <div>
+            <dt>Impressions</dt>
+            <dd>{formatNumber(impressions)}</dd>
           </div>
           <div>
             <dt>GGR USD</dt>

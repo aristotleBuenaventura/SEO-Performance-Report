@@ -7,9 +7,9 @@ interface KpiCardsProps {
 }
 
 const cards = [
-  { key: 'impressions', label: 'Impressions', tone: 'blue' },
   { key: 'clicks', label: 'Clicks', tone: 'teal' },
-  { key: 'ggrUsd', label: 'Revenue · GGR USD', tone: 'gold' },
+  { key: 'impressions', label: 'Impressions', tone: 'blue' },
+  { key: 'ggrUsd', label: 'GGR USD', tone: 'gold' },
 ] as const
 
 export function KpiCards({ impressions, clicks, ggrUsd }: KpiCardsProps) {

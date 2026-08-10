@@ -38,7 +38,7 @@ export function BrandNav({
   return (
     <aside className="brand-nav">
       <div className="brand-nav__totals">
-        <p className="brand-nav__eyebrow">Active view</p>
+        <p className="brand-nav__eyebrow">ACTIVE VIEW</p>
         <h2 className="brand-nav__title">
           <span className="brand-nav__title-text">{brandLabel}</span>
           {active !== 'summary' ? (
@@ -73,7 +73,7 @@ export function BrandNav({
       </div>
 
       <p className="brand-nav__section">
-        Brands{currencyLabel !== 'All' ? ` · ${currencyLabel}` : ''}
+        BRANDS{currencyLabel !== 'All' ? ` · ${currencyLabel}` : ''}
       </p>
       <nav className="brand-nav__list" aria-label="Brands">
         {tabs.map((tab) => {
@@ -91,7 +91,7 @@ export function BrandNav({
               onClick={() => onChange(tab.id)}
             >
               {tab.id === 'summary' ? (
-                <span className="brand-nav__all">All</span>
+                <span className="brand-nav__all">ALL</span>
               ) : logo ? (
                 <img className="brand-nav__logo" src={logo} alt="" />
               ) : (

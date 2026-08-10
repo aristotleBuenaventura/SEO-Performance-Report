@@ -77,7 +77,7 @@ export function ReportPage({ api, showAdmin, onLogout }: ReportPageProps) {
   }, [visibleTabs, brand])
 
   const brandLabel =
-    api.brandTabs.find((t) => t.id === brand)?.label ?? 'Summary'
+    api.brandTabs.find((t) => t.id === brand)?.label ?? 'SUMMARY'
 
   const chartSeries = useMemo(
     () => api.getBrandMonthly(brand, currency),
@@ -109,7 +109,7 @@ export function ReportPage({ api, showAdmin, onLogout }: ReportPageProps) {
   const isZoomed = !(year === 'all' && month === 'all')
 
   return (
-    <div className="app-shell">
+    <div className="app-shell report-page">
       <header className="topbar">
         <div className="topbar__brand">
           <img
@@ -143,7 +143,7 @@ export function ReportPage({ api, showAdmin, onLogout }: ReportPageProps) {
                     <path d="M12 3 4 7v5c0 5 3.4 8.4 8 9 4.6-.6 8-4 8-9V7l-8-4Z" />
                     <path d="M9.5 12.5 11 14l3.5-3.5" />
                   </svg>
-                  Admin
+                  ADMIN
                 </Link>
                 {onLogout ? (
                   <button
@@ -156,7 +156,7 @@ export function ReportPage({ api, showAdmin, onLogout }: ReportPageProps) {
                       <path d="M15 12H3" />
                       <path d="m6 9-3 3 3 3" />
                     </svg>
-                    Sign out
+                    SIGN OUT
                   </button>
                 ) : null}
               </>

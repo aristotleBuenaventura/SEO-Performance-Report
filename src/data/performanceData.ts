@@ -16,19 +16,19 @@ export interface PeriodFilter {
 }
 
 export const CALENDAR_MONTH_OPTIONS = [
-  { value: 'all', label: 'All' },
-  { value: '01', label: 'January' },
-  { value: '02', label: 'February' },
-  { value: '03', label: 'March' },
-  { value: '04', label: 'April' },
-  { value: '05', label: 'May' },
-  { value: '06', label: 'June' },
-  { value: '07', label: 'July' },
-  { value: '08', label: 'August' },
-  { value: '09', label: 'September' },
-  { value: '10', label: 'October' },
-  { value: '11', label: 'November' },
-  { value: '12', label: 'December' },
+  { value: 'all', label: 'ALL' },
+  { value: '01', label: 'JANUARY' },
+  { value: '02', label: 'FEBRUARY' },
+  { value: '03', label: 'MARCH' },
+  { value: '04', label: 'APRIL' },
+  { value: '05', label: 'MAY' },
+  { value: '06', label: 'JUNE' },
+  { value: '07', label: 'JULY' },
+  { value: '08', label: 'AUGUST' },
+  { value: '09', label: 'SEPTEMBER' },
+  { value: '10', label: 'OCTOBER' },
+  { value: '11', label: 'NOVEMBER' },
+  { value: '12', label: 'DECEMBER' },
 ] as const
 
 export function getLatestPeriodDefaults(months: string[]): PeriodFilter {
@@ -39,14 +39,14 @@ export function getLatestPeriodDefaults(months: string[]): PeriodFilter {
 }
 
 export function formatPeriodLabel(period: PeriodFilter): string {
-  if (period.year === 'all' && period.month === 'all') return 'All periods'
+  if (period.year === 'all' && period.month === 'all') return 'ALL PERIODS'
   const monthName =
     CALENDAR_MONTH_OPTIONS.find((m) => m.value === period.month)?.label ?? ''
   if (period.year !== 'all' && period.month !== 'all') {
     return `${monthName} ${period.year}`
   }
-  if (period.year !== 'all') return `Year ${period.year}`
-  return monthName || 'All periods'
+  if (period.year !== 'all') return `YEAR ${period.year}`
+  return monthName || 'ALL PERIODS'
 }
 
 export function exactMonthKey(period: PeriodFilter): string | null {
@@ -55,11 +55,11 @@ export function exactMonthKey(period: PeriodFilter): string | null {
 }
 
 export function formatMonthLabel(month: string): string {
-  if (month === 'all') return 'All'
+  if (month === 'all') return 'ALL'
   const [y, m] = month.split('-')
   const names = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+    'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
   ]
   return `${names[Number(m) - 1]} ${y}`
 }
@@ -121,7 +121,7 @@ export function createPerformanceApi(extract: ReportExtract) {
     id: BrandId
     label: string
   }[] = [
-    { id: 'summary', label: 'Summary' },
+    { id: 'summary', label: 'SUMMARY' },
     ...tabOrder.map((id) => ({
       id,
       label: brandLabel(id),
@@ -167,7 +167,7 @@ export function createPerformanceApi(extract: ReportExtract) {
   function getBrandTabsForCurrency(currency: CurrencyCode | 'all') {
     if (currency === 'all') return brandTabs
     return [
-      { id: 'summary', label: 'Summary' },
+      { id: 'summary', label: 'SUMMARY' },
       ...brandData
         .filter((b) => b.currencies.includes(currency))
         .map((b) => ({

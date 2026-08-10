@@ -8,6 +8,15 @@
   overflow: hidden;
 }
 
+.report-page,
+.report-page .nav-btn,
+.report-page .brand-nav__name,
+.report-page .brand-nav__title-text,
+.report-page .brand-nav__section,
+.report-page .donut-legend__name {
+  text-transform: uppercase;
+}
+
 /* ── Top bar ── */
 .topbar {
   display: flex;
@@ -107,6 +116,7 @@
   font: inherit;
   font-size: 0.875rem;
   text-align: left;
+  text-transform: uppercase;
 }
 
 .filter-select.is-open .filter-select__trigger,
@@ -127,6 +137,7 @@
   border: 1px solid var(--border-strong);
   border-radius: 10px;
   box-shadow: var(--shadow);
+  text-transform: uppercase;
 }
 
 .filter-select__option {

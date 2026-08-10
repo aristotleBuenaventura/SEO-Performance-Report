@@ -31,20 +31,20 @@ export function FiltersBar({
   return (
     <div className="filters">
       <label className="filter">
-        <span>Year</span>
+        <span>YEAR</span>
         <FilterSelect
           aria-label="Year"
           value={year}
           onChange={onYearChange}
           options={yearOptions.map((y) => ({
             value: y,
-            label: y === 'all' ? 'All' : y,
+            label: y === 'all' ? 'ALL' : y,
           }))}
         />
       </label>
 
       <label className="filter">
-        <span>Month</span>
+        <span>MONTH</span>
         <FilterSelect
           aria-label="Month"
           value={month}
@@ -57,27 +57,27 @@ export function FiltersBar({
       </label>
 
       <label className="filter">
-        <span>Currency</span>
+        <span>CURRENCY</span>
         <FilterSelect
           aria-label="Currency"
           value={currency}
           onChange={(v) => onCurrencyChange(v as CurrencyCode | 'all')}
           options={currencyOptions.map((c) => ({
             value: c,
-            label: c === 'all' ? 'All' : c,
+            label: c === 'all' ? 'ALL' : c,
           }))}
         />
       </label>
 
       <label className="filter">
-        <span>Theme</span>
+        <span>THEME</span>
         <FilterSelect
           aria-label="Theme"
           value={theme}
           onChange={(v) => onThemeChange(v as ThemeMode)}
           options={[
-            { value: 'dark', label: 'Dark' },
-            { value: 'light', label: 'Light' },
+            { value: 'dark', label: 'DARK' },
+            { value: 'light', label: 'LIGHT' },
           ]}
         />
       </label>

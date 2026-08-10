@@ -16,20 +16,20 @@ export interface BrandDefinition {
 }
 
 export const BRAND_DEFINITIONS: readonly BrandDefinition[] = [
-  { code: 'MCW', id: 'mcw', label: 'Mega Casino World', logo: 'mcw-.png' },
-  { code: 'MXW', id: 'mxw', label: 'Mega Cricket World', logo: 'mxw.png' },
-  { code: 'B1', id: 'b1', label: 'Banglabet', logo: 'b1.png' },
-  { code: 'B2', id: 'b2', label: 'Bengalbet', logo: 'b2.png' },
-  { code: 'K1', id: 'k1', label: 'Khelaghor', logo: 'k1.png' },
-  { code: 'B3', id: 'b3', label: 'Deshislots', logo: 'deshislots.png' },
-  { code: 'B4', id: 'b4', label: 'Banglawin', logo: 'b4.png' },
-  { code: 'G1', id: 'g1', label: 'Ga888', logo: 'g1.png' },
-  { code: 'TK', id: 'tk', label: 'Tkbaazi', logo: 'tk.png' },
-  { code: 'BP', id: 'bp', label: 'Banglaplus', logo: 'b5.png' },
-  { code: 'JW', id: 'jw', label: 'Joywin', logo: 'jw.png' },
-  { code: 'NCVIP', id: 'ncvip', label: 'New City VIP', logo: 'ncvip.png' },
-  { code: 'M3', id: 'm3', label: 'Mnlbet', logo: 'm3.png' },
-  { code: 'C1', id: 'c1', label: 'Cf789', logo: 'c1.png' },
+  { code: 'MCW', id: 'mcw', label: 'MEGA CASINO WORLD', logo: 'mcw-.png' },
+  { code: 'MXW', id: 'mxw', label: 'MEGA CRICKET WORLD', logo: 'mxw.png' },
+  { code: 'B1', id: 'b1', label: 'BANGLABET', logo: 'b1.png' },
+  { code: 'B2', id: 'b2', label: 'BENGALBET', logo: 'b2.png' },
+  { code: 'K1', id: 'k1', label: 'KHELAGHOR', logo: 'k1.png' },
+  { code: 'B3', id: 'b3', label: 'DESHISLOTS', logo: 'deshislots.png' },
+  { code: 'B4', id: 'b4', label: 'BANGLAWIN', logo: 'b4.png' },
+  { code: 'G1', id: 'g1', label: 'GA888', logo: 'g1.png' },
+  { code: 'TK', id: 'tk', label: 'TKBAAZI', logo: 'tk.png' },
+  { code: 'BP', id: 'bp', label: 'BANGLAPLUS', logo: 'b5.png' },
+  { code: 'JW', id: 'jw', label: 'JOYWIN', logo: 'jw.png' },
+  { code: 'NCVIP', id: 'ncvip', label: 'NEW CITY VIP', logo: 'ncvip.png' },
+  { code: 'M3', id: 'm3', label: 'MNLBET', logo: 'm3.png' },
+  { code: 'C1', id: 'c1', label: 'CF789', logo: 'c1.png' },
 ] as const
 
 export const BRAND_ORDER = BRAND_DEFINITIONS.map((b) => b.id)

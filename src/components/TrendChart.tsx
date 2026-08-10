@@ -30,8 +30,8 @@ type ChartRow = MonthlyMetric & { label: string }
 function axisLabel(month: string) {
   const [y, m] = month.split('-')
   const names = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    'JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+    'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC',
   ]
   const idx = Number(m) - 1
   return `${names[idx] ?? m} ${y.slice(2)}`

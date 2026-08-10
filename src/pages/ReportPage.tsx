@@ -119,10 +119,7 @@ export function ReportPage({ api, showAdmin, onLogout }: ReportPageProps) {
             width={40}
             height={40}
           />
-          <div>
-            <h1>SEO Performance</h1>
-            <p>Impressions · Clicks · GGR USD · {api.dataSource}</p>
-          </div>
+          <h1>SEO Performance</h1>
         </div>
 
         <div className="topbar__right">

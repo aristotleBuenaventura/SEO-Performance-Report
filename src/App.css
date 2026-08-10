@@ -674,6 +674,7 @@
   pointer-events: none;
   color: var(--muted);
   opacity: 0.55;
+  text-transform: none;
 }
 
 .donut-layout {
@@ -1475,6 +1476,18 @@
   justify-content: flex-end;
   border-top: 1px solid var(--border);
   padding: 0.9rem clamp(1rem, 3vw, 2rem) 1.2rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.admin-shell > .app-footer {
+  flex: 0 0 auto;
+  margin-top: auto;
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  border-top: 1px solid var(--border);
+  padding: 0.75rem 4px 0.35rem;
   color: var(--muted);
   font-size: 0.78rem;
 }

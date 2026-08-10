@@ -892,6 +892,10 @@ export function AdminDashboard({
           )}
         </section>
       </div>
+
+      <footer className="app-footer">
+        <span>Developed by Aris</span>
+      </footer>
     </div>
   )
 }

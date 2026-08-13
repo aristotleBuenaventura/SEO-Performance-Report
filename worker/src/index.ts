@@ -251,7 +251,7 @@ async function requireReportAccess(
 
 
 
-async function requireSuperadmin(
+async function requireAdmin(
   request: Request,
   env: Env,
 ): Promise<AuthUserOk | AuthFail> {
@@ -272,18 +272,34 @@ async function requireSuperadmin(
       ),
     }
   }
-  if (normalizeRole(user.role) !== 'superadmin') {
+  const role = normalizeRole(user.role)
+  if (role !== 'superadmin' && role !== 'admin') {
     return {
       ok: false,
-      response: json(request, env, { error: 'Superadmin access required.' }, 403),
+      response: json(request, env, { error: 'Admin access required.' }, 403),
     }
   }
   return {
     ok: true,
     session: auth.session,
-    role: 'superadmin',
+    role,
     email: user.email,
   }
+}
+
+async function requireSuperadmin(
+  request: Request,
+  env: Env,
+): Promise<AuthUserOk | AuthFail> {
+  const auth = await requireAdmin(request, env)
+  if (!auth.ok) return auth
+  if (auth.role !== 'superadmin') {
+    return {
+      ok: false,
+      response: json(request, env, { error: 'Superadmin access required.' }, 403),
+    }
+  }
+  return auth
 }
 
 async function issueSessionResponse(
@@ -969,9 +985,9 @@ export default {
       }
 
 
-      // ——— Superadmin user management ———
+      // ——— Admin user management (admin + superadmin) ———
       if (path === '/api/admin/users' && request.method === 'GET') {
-        const auth = await requireSuperadmin(request, env)
+        const auth = await requireAdmin(request, env)
         if (!auth.ok) return auth.response
         const [users, presence] = await Promise.all([
           listUsers(env.CONFIG),
@@ -999,8 +1015,8 @@ export default {
       }
 
       if (path === '/api/admin/users' && request.method === 'POST') {
-        // Superadmin-only: create operator (admin) accounts from the dashboard.
-        const auth = await requireSuperadmin(request, env)
+        // Admin + superadmin: create operator (admin) accounts from the dashboard.
+        const auth = await requireAdmin(request, env)
         if (!auth.ok) return auth.response
         const body = (await request.json().catch(() => ({}))) as {
           email?: string
@@ -1043,7 +1059,7 @@ export default {
       {
         const passMatch = path.match(/^\/api\/admin\/users\/([^/]+)\/password$/)
         if (passMatch && request.method === 'POST') {
-          const auth = await requireSuperadmin(request, env)
+          const auth = await requireAdmin(request, env)
           if (!auth.ok) return auth.response
           const targetEmail = normalizeEmail(decodeURIComponent(passMatch[1]!))
           const target = await getUser(env.CONFIG, targetEmail)
@@ -1095,7 +1111,7 @@ export default {
           /^\/api\/admin\/users\/([^/]+)\/logout$/,
         )
         if (logoutMatch && request.method === 'POST') {
-          const auth = await requireSuperadmin(request, env)
+          const auth = await requireAdmin(request, env)
           if (!auth.ok) return auth.response
           const targetEmail = normalizeEmail(
             decodeURIComponent(logoutMatch[1]!),
@@ -1140,7 +1156,7 @@ export default {
       {
         const delMatch = path.match(/^\/api\/admin\/users\/([^/]+)$/)
         if (delMatch && request.method === 'DELETE') {
-          const auth = await requireSuperadmin(request, env)
+          const auth = await requireAdmin(request, env)
           if (!auth.ok) return auth.response
           const targetEmail = normalizeEmail(decodeURIComponent(delMatch[1]!))
           if (targetEmail === auth.email) {
@@ -1169,7 +1185,7 @@ export default {
       }
 
       if (path === '/api/audit' && request.method === 'GET') {
-        const auth = await requireSuperadmin(request, env)
+        const auth = await requireAdmin(request, env)
         if (!auth.ok) return auth.response
         const events = await readAudit(env.CONFIG, 200)
         return json(request, env, { ok: true, events })
@@ -1213,7 +1229,7 @@ export default {
       }
 
       if (path === '/api/report/extract' && request.method === 'PUT') {
-        const auth = await requireSuperadmin(request, env)
+        const auth = await requireAdmin(request, env)
         if (!auth.ok) return auth.response
         const body = (await request.json().catch(() => null)) as {
           extract?: unknown
@@ -1270,7 +1286,7 @@ export default {
       }
 
       if (path === '/api/report/extract' && request.method === 'DELETE') {
-        const auth = await requireSuperadmin(request, env)
+        const auth = await requireAdmin(request, env)
         if (!auth.ok) return auth.response
         const body = (await request.json().catch(() => ({}))) as {
           password?: string
@@ -1314,7 +1330,7 @@ export default {
       }
 
       if (path === '/api/report/extract/meta' && request.method === 'GET') {
-        const auth = await requireSuperadmin(request, env)
+        const auth = await requireAdmin(request, env)
         if (!auth.ok) return auth.response
         const raw = await env.CONFIG.get(REPORT_EXTRACT_KEY)
         if (!raw) {

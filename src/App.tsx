@@ -181,7 +181,9 @@ export default function App() {
   }, [session, navigate])
 
   const api = useMemo(() => createPerformanceApi(extract), [extract])
-  const canAdmin = Boolean(session && totpEnabled && role === 'superadmin')
+  const canAdmin = Boolean(
+    session && totpEnabled && (role === 'superadmin' || role === 'admin'),
+  )
 
   if (booting) {
     return (
@@ -254,7 +256,7 @@ export default function App() {
             />
           ) : !totpEnabled ? (
             <Navigate to="/login" replace />
-          ) : role !== 'superadmin' ? (
+          ) : role !== 'superadmin' && role !== 'admin' ? (
             <Navigate to="/" replace />
           ) : (
             <AdminDashboard

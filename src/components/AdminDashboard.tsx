@@ -211,10 +211,13 @@ export function AdminDashboard({
       try {
         const me = await fetchSessionMe(session.workerUrl)
         if (cancelled) return
-        if (!me?.authenticated || me.role !== 'superadmin') {
+        if (
+          !me?.authenticated ||
+          (me.role !== 'superadmin' && me.role !== 'admin')
+        ) {
           setAllowed(false)
           setGateChecking(false)
-          setError('Superadmin access required.')
+          setError('Admin access required.')
           if (onAccessDenied) await onAccessDenied()
           else await onLogout()
           return
@@ -223,7 +226,7 @@ export function AdminDashboard({
       } catch {
         if (!cancelled) {
           setAllowed(false)
-          setError('Could not verify superadmin session.')
+          setError('Could not verify admin session.')
           if (onAccessDenied) await onAccessDenied()
           else await onLogout()
         }
@@ -244,7 +247,7 @@ export function AdminDashboard({
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to load accounts'
       setError(msg)
-      if (/superadmin|forbidden|403/i.test(msg)) {
+      if (/admin access required|superadmin|forbidden|403/i.test(msg)) {
         setAllowed(false)
         if (onAccessDenied) await onAccessDenied()
       }

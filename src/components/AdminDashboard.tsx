@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   createAdminUser,
   deleteAdminUser,
@@ -22,7 +22,6 @@ import { ThemeToggle } from './ThemeToggle'
 interface AdminDashboardProps {
   session: WorkerSession
   onLogout: () => void | Promise<void>
-  onAccessDenied?: () => void | Promise<void>
   onExtractUploaded?: () => void | Promise<void>
 }
 
@@ -174,9 +173,9 @@ function IconAudit() {
 export function AdminDashboard({
   session,
   onLogout,
-  onAccessDenied,
   onExtractUploaded,
 }: AdminDashboardProps) {
+  const navigate = useNavigate()
   const [allowed, setAllowed] = useState(false)
   const [gateChecking, setGateChecking] = useState(true)
   const [users, setUsers] = useState<ManagedUser[]>([])
@@ -211,15 +210,10 @@ export function AdminDashboard({
       try {
         const me = await fetchSessionMe(session.workerUrl)
         if (cancelled) return
-        if (
-          !me?.authenticated ||
-          (me.role !== 'superadmin' && me.role !== 'admin')
-        ) {
+        if (!me?.authenticated) {
           setAllowed(false)
           setGateChecking(false)
-          setError('Admin access required.')
-          if (onAccessDenied) await onAccessDenied()
-          else await onLogout()
+          navigate('/login', { replace: true })
           return
         }
         setAllowed(true)
@@ -227,8 +221,6 @@ export function AdminDashboard({
         if (!cancelled) {
           setAllowed(false)
           setError('Could not verify admin session.')
-          if (onAccessDenied) await onAccessDenied()
-          else await onLogout()
         }
       } finally {
         if (!cancelled) setGateChecking(false)
@@ -237,7 +229,7 @@ export function AdminDashboard({
     return () => {
       cancelled = true
     }
-  }, [session.workerUrl, onLogout, onAccessDenied])
+  }, [session.workerUrl, navigate])
 
   const loadUsers = useCallback(async () => {
     try {
@@ -249,12 +241,11 @@ export function AdminDashboard({
       setError(msg)
       if (/admin access required|superadmin|forbidden|403/i.test(msg)) {
         setAllowed(false)
-        if (onAccessDenied) await onAccessDenied()
       }
     } finally {
       setLoading(false)
     }
-  }, [session, onAccessDenied])
+  }, [session])
 
   const loadMeta = useCallback(async () => {
     try {

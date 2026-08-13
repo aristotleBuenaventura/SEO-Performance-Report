@@ -22,7 +22,6 @@ import {
   loginWithCredentials,
   logoutWorker,
   verify2fa,
-  type UserRole,
   type WorkerSession,
 } from './lib/workerApi'
 import type { ReportExtract } from './types'
@@ -37,12 +36,12 @@ export default function App() {
   const [booting, setBooting] = useState(true)
   const [session, setSession] = useState<WorkerSession | null>(null)
   const [totpEnabled, setTotpEnabled] = useState(false)
-  const [role, setRole] = useState<UserRole | null>(null)
   const [authError, setAuthError] = useState<string | null>(null)
   const [authLoading, setAuthLoading] = useState(false)
   const [challengeToken, setChallengeToken] = useState<string | null>(null)
   const [authNotice, setAuthNotice] = useState<string | null>(null)
   const [extract, setExtract] = useState<ReportExtract>(EMPTY_EXTRACT)
+  const [pendingAdminRedirect, setPendingAdminRedirect] = useState(false)
 
   const resetToken = searchParams.get('resetToken')
 
@@ -77,7 +76,6 @@ export default function App() {
         email: me.email || email,
         role: me.role,
       })
-      setRole(me.role)
       setTotpEnabled(nextTotp ?? me.totpEnabled)
       setChallengeToken(null)
       setAuthError(null)
@@ -98,7 +96,6 @@ export default function App() {
             email: me.email,
             role: me.role,
           })
-          setRole(me.role)
           setTotpEnabled(me.totpEnabled)
         }
       } catch {
@@ -134,7 +131,8 @@ export default function App() {
           return false
         }
         await applySession(result.email || email, result.totpEnabled)
-        navigate(result.totpEnabled ? '/admin' : '/login')
+        if (result.totpEnabled) setPendingAdminRedirect(true)
+        else navigate('/login')
         return true
       } catch (err) {
         setAuthError(err instanceof Error ? err.message : 'Login failed')
@@ -153,7 +151,7 @@ export default function App() {
       try {
         const result = await verify2fa(WORKER_URL, token, code)
         await applySession(result.email || '', true)
-        navigate('/admin')
+        setPendingAdminRedirect(true)
         return true
       } catch (err) {
         setAuthError(err instanceof Error ? err.message : '2FA failed')
@@ -162,7 +160,7 @@ export default function App() {
         setAuthLoading(false)
       }
     },
-    [applySession, navigate],
+    [applySession],
   )
 
   const handleLogout = useCallback(async () => {
@@ -174,16 +172,21 @@ export default function App() {
       }
     }
     setSession(null)
-    setRole(null)
     setTotpEnabled(false)
     setChallengeToken(null)
+    setPendingAdminRedirect(false)
     navigate('/')
   }, [session, navigate])
 
   const api = useMemo(() => createPerformanceApi(extract), [extract])
-  const canAdmin = Boolean(
-    session && totpEnabled && (role === 'superadmin' || role === 'admin'),
-  )
+  // superadmin and admin are equivalent for dashboard access
+  const canAdmin = Boolean(session && totpEnabled)
+
+  useEffect(() => {
+    if (!pendingAdminRedirect || !canAdmin) return
+    setPendingAdminRedirect(false)
+    navigate('/admin', { replace: true })
+  }, [pendingAdminRedirect, canAdmin, navigate])
 
   if (booting) {
     return (
@@ -219,7 +222,7 @@ export default function App() {
                   mandatorySetup
                   onTotpChange={async (enabled) => {
                     setTotpEnabled(enabled)
-                    if (enabled) navigate('/admin')
+                    if (enabled) setPendingAdminRedirect(true)
                   }}
                 />
               </div>
@@ -256,13 +259,10 @@ export default function App() {
             />
           ) : !totpEnabled ? (
             <Navigate to="/login" replace />
-          ) : role !== 'superadmin' && role !== 'admin' ? (
-            <Navigate to="/" replace />
           ) : (
             <AdminDashboard
               session={session}
               onLogout={handleLogout}
-              onAccessDenied={async () => navigate('/')}
               onExtractUploaded={async () => {
                 await loadExtract()
               }}

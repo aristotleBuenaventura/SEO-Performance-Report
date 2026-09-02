@@ -30,6 +30,7 @@ export const BRAND_DEFINITIONS: readonly BrandDefinition[] = [
   { code: 'NCVIP', id: 'ncvip', label: 'NEW CITY VIP', logo: 'ncvip.png' },
   { code: 'M3', id: 'm3', label: 'MNLBET', logo: 'm3.png' },
   { code: 'C1', id: 'c1', label: 'CF789', logo: 'c1.png' },
+  { code: 'STB', id: 'stb', label: 'STBETPLUS', logo: 'stb.png' },
 ] as const
 
 export const BRAND_ORDER = BRAND_DEFINITIONS.map((b) => b.id)

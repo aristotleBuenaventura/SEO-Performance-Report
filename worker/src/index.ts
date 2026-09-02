@@ -287,19 +287,12 @@ async function requireAdmin(
   }
 }
 
+/** superadmin and admin are equivalent for all dashboard APIs. */
 async function requireSuperadmin(
   request: Request,
   env: Env,
 ): Promise<AuthUserOk | AuthFail> {
-  const auth = await requireAdmin(request, env)
-  if (!auth.ok) return auth
-  if (auth.role !== 'superadmin') {
-    return {
-      ok: false,
-      response: json(request, env, { error: 'Superadmin access required.' }, 403),
-    }
-  }
-  return auth
+  return requireAdmin(request, env)
 }
 
 async function issueSessionResponse(
@@ -392,7 +385,7 @@ export default {
       }
 
       // First user: ADMIN_SECRET + IP_ALLOWLIST (when public).
-      // Later users: authenticated superadmin session + ADMIN_SECRET (any IP).
+      // Later users: authenticated admin/superadmin session + ADMIN_SECRET (any IP).
       if (path === '/api/auth/upsert-user' && request.method === 'POST') {
         const allowlist = parseIpAllowlist(env.IP_ALLOWLIST)
         const publicInternet = isPublicInternet(env)
@@ -440,7 +433,7 @@ export default {
               env,
               {
                 error:
-                  'Creating or updating users requires a superadmin session (2FA) plus ADMIN_SECRET.',
+                  'Creating or updating users requires an admin session (2FA) plus ADMIN_SECRET.',
               },
               401,
             )

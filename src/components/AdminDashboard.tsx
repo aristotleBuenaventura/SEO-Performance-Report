@@ -239,9 +239,6 @@ export function AdminDashboard({
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to load accounts'
       setError(msg)
-      if (/admin access required|superadmin|forbidden|403/i.test(msg)) {
-        setAllowed(false)
-      }
     } finally {
       setLoading(false)
     }
@@ -545,7 +542,7 @@ export function AdminDashboard({
               {uploading ? 'Parsing & uploading…' : 'Drop Excel here or browse'}
             </span>
             <span className="upload-zone__hint">
-              .xlsx / .xls · allowed brand sheets only: MCW, MXW, B1–B4, K1, G1, TK, BP, JW, NCVIP, M3, C1
+              .xlsx / .xls · allowed brand sheets only: MCW, MXW, B1–B4, K1, G1, TK, BP, JW, NCVIP, M3, C1, STB
             </span>
           </label>
 

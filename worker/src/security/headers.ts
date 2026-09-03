@@ -16,6 +16,7 @@ export function securityHeaders(
     'Content-Security-Policy':
       "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'",
     'X-Permitted-Cross-Domain-Policies': 'none',
+    'X-Robots-Tag': 'noindex, nofollow, noarchive, nosnippet',
     'Cache-Control': 'no-store',
   }
   if (new URL(request.url).protocol === 'https:') {

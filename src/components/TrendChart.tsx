@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
 import {
   CartesianGrid,
-  Legend,
   Line,
   LineChart,
   ReferenceLine,
@@ -26,6 +25,25 @@ interface TrendChartProps {
 }
 
 type ChartRow = MonthlyMetric & { label: string }
+type SeriesKey = 'clicks' | 'impressions' | 'ggrUsd'
+
+const SERIES: { key: SeriesKey; name: string; color: string }[] = [
+  { key: 'clicks', name: 'Clicks', color: '#3dd6c3' },
+  { key: 'impressions', name: 'Impressions', color: '#5b8def' },
+  { key: 'ggrUsd', name: 'GGR USD', color: '#f0b429' },
+]
+
+function compactNumber(v: number) {
+  if (Math.abs(v) >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`
+  if (Math.abs(v) >= 1000) return `${Math.round(v / 1000)}k`
+  return String(v)
+}
+
+function compactUsd(v: number) {
+  if (Math.abs(v) >= 1_000_000) return `$${(v / 1_000_000).toFixed(1)}M`
+  if (Math.abs(v) >= 1000) return `$${Math.round(v / 1000)}k`
+  return `$${v}`
+}
 
 function axisLabel(month: string) {
   const [y, m] = month.split('-')
@@ -65,11 +83,38 @@ export function TrendChart({
   const axis = chartAxisColor(theme)
   const isMobile = useIsMobile()
   const [activeRow, setActiveRow] = useState<ChartRow | null>(null)
+  const [hidden, setHidden] = useState<Record<SeriesKey, boolean>>({
+    clicks: false,
+    impressions: false,
+    ggrUsd: false,
+  })
+
+  function toggleSeries(key: string) {
+    if (key !== 'clicks' && key !== 'impressions' && key !== 'ggrUsd') return
+    setHidden((prev) => ({ ...prev, [key]: !prev[key] }))
+  }
+
+  const showCounts = !hidden.clicks || !hidden.impressions
+  const showGgr = !hidden.ggrUsd
+  const dualAxis = showCounts && showGgr
 
   const chartData = data.map((row) => ({
     ...row,
     label: axisLabel(row.month),
   }))
+
+  const rotateX = zoomed || isMobile
+  const xInterval = zoomed
+    ? isMobile && chartData.length > 8
+      ? 1
+      : 0
+    : isMobile
+      ? Math.max(0, Math.ceil(chartData.length / 6) - 1)
+      : chartData.length > 24
+        ? 2
+        : chartData.length > 14
+          ? 1
+          : 0
 
   const focusLabel =
     zoomedMonth != null
@@ -95,23 +140,57 @@ export function TrendChart({
       {isMobile && activeRow ? (
         <div className="trend-chart__readout" aria-live="polite">
           <strong>{formatMonthLabel(activeRow.month)}</strong>
-          <span className="trend-chart__readout-clicks">
-            Clicks {formatNumber(activeRow.clicks)}
-          </span>
-          <span className="trend-chart__readout-impr">
-            Impressions {formatNumber(activeRow.impressions)}
-          </span>
-          <span className="trend-chart__readout-ggr">
-            GGR USD {formatUsd(activeRow.ggrUsd)}
-          </span>
+          {hidden.clicks ? null : (
+            <span className="trend-chart__readout-clicks">
+              Clicks {formatNumber(activeRow.clicks)}
+            </span>
+          )}
+          {hidden.impressions ? null : (
+            <span className="trend-chart__readout-impr">
+              Impressions {formatNumber(activeRow.impressions)}
+            </span>
+          )}
+          {hidden.ggrUsd ? null : (
+            <span className="trend-chart__readout-ggr">
+              GGR USD {formatUsd(activeRow.ggrUsd)}
+            </span>
+          )}
         </div>
       ) : null}
 
       <div className="chart-body">
+        <ul className="trend-chart__legend">
+          {SERIES.map((series) => {
+            const off = hidden[series.key]
+            return (
+              <li key={series.key}>
+                <button
+                  type="button"
+                  className={off ? 'is-off' : undefined}
+                  style={
+                    {
+                      '--series-color': series.color,
+                    } as CSSProperties
+                  }
+                  aria-pressed={!off}
+                  onClick={() => toggleSeries(series.key)}
+                >
+                  <i aria-hidden />
+                  {series.name}
+                </button>
+              </li>
+            )
+          })}
+        </ul>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart
             data={chartData}
-            margin={{ top: 12, right: 8, left: 0, bottom: zoomed ? 8 : 4 }}
+            margin={{
+              top: 8,
+              right: isMobile ? 4 : 8,
+              left: 0,
+              bottom: rotateX ? 10 : 4,
+            }}
             onMouseMove={(state) => {
               if (!isMobile) return
               const idx = state?.activeTooltipIndex ?? state?.activeIndex
@@ -132,49 +211,40 @@ export function TrendChart({
             <XAxis
               dataKey="label"
               stroke={axis}
-              tick={{ fill: axis, fontSize: 10 }}
-              interval={zoomed ? 0 : chartData.length > 24 ? 2 : chartData.length > 14 ? 1 : 0}
-              minTickGap={4}
+              tick={{ fill: axis, fontSize: isMobile ? 9 : 10 }}
+              interval={xInterval}
+              minTickGap={isMobile ? 22 : 8}
               axisLine={false}
               tickLine={false}
-              angle={zoomed ? -30 : 0}
-              textAnchor={zoomed ? 'end' : 'middle'}
-              height={zoomed ? 48 : 28}
+              angle={rotateX ? -40 : 0}
+              textAnchor={rotateX ? 'end' : 'middle'}
+              height={rotateX ? 48 : 28}
             />
             <YAxis
               yAxisId="left"
+              hide={!showCounts}
               stroke={axis}
               width={44}
               tick={{ fill: axis, fontSize: 10 }}
               axisLine={false}
               tickLine={false}
-              tickFormatter={(v) =>
-                Math.abs(v) >= 1_000_000
-                  ? `${(v / 1_000_000).toFixed(1)}M`
-                  : Math.abs(v) >= 1000
-                    ? `${Math.round(v / 1000)}k`
-                    : String(v)
-              }
+              tickFormatter={compactNumber}
             />
             <YAxis
               yAxisId="right"
-              orientation="right"
+              orientation={dualAxis ? 'right' : 'left'}
+              hide={!showGgr}
               stroke={axis}
               width={48}
               tick={{ fill: axis, fontSize: 10 }}
               axisLine={false}
               tickLine={false}
-              tickFormatter={(v) =>
-                Math.abs(v) >= 1_000_000
-                  ? `$${(v / 1_000_000).toFixed(1)}M`
-                  : Math.abs(v) >= 1000
-                    ? `$${Math.round(v / 1000)}k`
-                    : `$${v}`
-              }
+              tickFormatter={compactUsd}
             />
             <Tooltip
               // Mobile: hide floating overlay — data shows in readout strip above chart
               content={isMobile ? () => null : undefined}
+              cursor={{ stroke: axis, strokeWidth: 1, strokeDasharray: '4 4' }}
               contentStyle={chartTooltipStyle(theme)}
               labelFormatter={(_, payload) => {
                 const row = payload?.[0]?.payload as MonthlyMetric | undefined
@@ -184,18 +254,6 @@ export function TrendChart({
                 const n = typeof value === 'number' ? value : Number(value) || 0
                 if (name === 'GGR USD') return [formatUsd(n), name]
                 return [formatNumber(n), name]
-              }}
-            />
-            <Legend
-              verticalAlign="top"
-              align="right"
-              iconType="circle"
-              wrapperStyle={{ fontSize: 11, paddingBottom: 4 }}
-              itemSorter={(item) => {
-                const order = ['Clicks', 'Impressions', 'GGR USD']
-                const key = String(item.value ?? '')
-                const idx = order.indexOf(key)
-                return idx === -1 ? 99 : idx
               }}
             />
             {focusLabel ? (
@@ -212,36 +270,24 @@ export function TrendChart({
                 }}
               />
             ) : null}
-            <Line
-              yAxisId="left"
-              type="monotone"
-              dataKey="clicks"
-              name="Clicks"
-              stroke="#3dd6c3"
-              strokeWidth={2.5}
-              dot={zoomed ? { r: 3.5, fill: '#3dd6c3' } : false}
-              activeDot={{ r: 5 }}
-            />
-            <Line
-              yAxisId="left"
-              type="monotone"
-              dataKey="impressions"
-              name="Impressions"
-              stroke="#5b8def"
-              strokeWidth={2.5}
-              dot={zoomed ? { r: 3.5, fill: '#5b8def' } : false}
-              activeDot={{ r: 5 }}
-            />
-            <Line
-              yAxisId="right"
-              type="monotone"
-              dataKey="ggrUsd"
-              name="GGR USD"
-              stroke="#f0b429"
-              strokeWidth={2.5}
-              dot={zoomed ? { r: 3.5, fill: '#f0b429' } : false}
-              activeDot={{ r: 5 }}
-            />
+            {SERIES.map((series) =>
+              hidden[series.key] ? null : (
+                <Line
+                  key={series.key}
+                  yAxisId={series.key === 'ggrUsd' ? 'right' : 'left'}
+                  type="monotone"
+                  dataKey={series.key}
+                  name={series.name}
+                  stroke={series.color}
+                  strokeWidth={2.5}
+                  isAnimationActive
+                  animationDuration={900}
+                  animationEasing="ease-out"
+                  dot={zoomed ? { r: 3.5, fill: series.color } : false}
+                  activeDot={{ r: 5 }}
+                />
+              ),
+            )}
           </LineChart>
         </ResponsiveContainer>
       </div>

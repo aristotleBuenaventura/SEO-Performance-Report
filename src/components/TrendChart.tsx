@@ -182,31 +182,53 @@ export function TrendChart({
             )
           })}
         </ul>
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart
-            data={chartData}
-            margin={{
-              top: 8,
-              right: isMobile ? 4 : 8,
-              left: 0,
-              bottom: rotateX ? 10 : 4,
-            }}
-            onMouseMove={(state) => {
-              if (!isMobile) return
-              const idx = state?.activeTooltipIndex ?? state?.activeIndex
-              if (typeof idx === 'number' && chartData[idx]) {
-                setActiveRow(chartData[idx]!)
-                return
-              }
-              if (state?.activeLabel != null) {
-                const row = chartData.find((d) => d.label === String(state.activeLabel))
-                if (row) setActiveRow(row)
-              }
-            }}
-            onMouseLeave={() => {
-              if (isMobile) setActiveRow(null)
-            }}
-          >
+        <div
+          className={
+            isMobile
+              ? 'trend-chart__plot'
+              : 'trend-chart__plot trend-chart__plot--hover-only'
+          }
+          onMouseDown={
+            isMobile
+              ? undefined
+              : (e) => {
+                  e.preventDefault()
+                }
+          }
+          onClick={
+            isMobile
+              ? undefined
+              : (e) => {
+                  e.preventDefault()
+                }
+          }
+        >
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart
+              data={chartData}
+              margin={{
+                top: 8,
+                right: isMobile ? 4 : 8,
+                left: 0,
+                bottom: rotateX ? 10 : 4,
+              }}
+              style={{ cursor: 'default', userSelect: 'none' }}
+              onMouseMove={(state) => {
+                if (!isMobile) return
+                const idx = state?.activeTooltipIndex ?? state?.activeIndex
+                if (typeof idx === 'number' && chartData[idx]) {
+                  setActiveRow(chartData[idx]!)
+                  return
+                }
+                if (state?.activeLabel != null) {
+                  const row = chartData.find((d) => d.label === String(state.activeLabel))
+                  if (row) setActiveRow(row)
+                }
+              }}
+              onMouseLeave={() => {
+                if (isMobile) setActiveRow(null)
+              }}
+            >
             <CartesianGrid stroke={chartGridColor(theme)} vertical={false} />
             <XAxis
               dataKey="label"
@@ -284,12 +306,17 @@ export function TrendChart({
                   animationDuration={900}
                   animationEasing="ease-out"
                   dot={zoomed ? { r: 3.5, fill: series.color } : false}
-                  activeDot={{ r: 5 }}
+                  activeDot={
+                    isMobile
+                      ? { r: 5 }
+                      : { r: 5, style: { pointerEvents: 'none' } }
+                  }
                 />
               ),
             )}
           </LineChart>
         </ResponsiveContainer>
+        </div>
       </div>
     </div>
   )

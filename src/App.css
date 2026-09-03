@@ -612,6 +612,27 @@
   min-height: 0;
 }
 
+.trend-chart__plot {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.trend-chart__plot--hover-only,
+.trend-chart__plot--hover-only .recharts-wrapper,
+.trend-chart__plot--hover-only .recharts-surface,
+.trend-chart__plot--hover-only .recharts-layer {
+  cursor: default !important;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.trend-chart__plot--hover-only .recharts-dot,
+.trend-chart__plot--hover-only .recharts-active-dot,
+.trend-chart__plot--hover-only .recharts-tooltip-cursor {
+  pointer-events: none !important;
+}
+
 .trend-chart .recharts-wrapper,
 .trend-chart .recharts-surface {
   cursor: default !important;

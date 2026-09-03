@@ -96,7 +96,6 @@ export function TrendChart({
 
   const showCounts = !hidden.clicks || !hidden.impressions
   const showGgr = !hidden.ggrUsd
-  const dualAxis = showCounts && showGgr
 
   const chartData = data.map((row) => ({
     ...row,
@@ -208,7 +207,7 @@ export function TrendChart({
               data={chartData}
               margin={{
                 top: 8,
-                right: isMobile ? 4 : 8,
+                right: showGgr ? (isMobile ? 8 : 12) : isMobile ? 4 : 8,
                 left: 0,
                 bottom: rotateX ? 10 : 4,
               }}
@@ -246,7 +245,7 @@ export function TrendChart({
               yAxisId="left"
               hide={!showCounts}
               stroke={axis}
-              width={44}
+              width={showCounts ? 44 : 0}
               tick={{ fill: axis, fontSize: 10 }}
               axisLine={false}
               tickLine={false}
@@ -254,10 +253,10 @@ export function TrendChart({
             />
             <YAxis
               yAxisId="right"
-              orientation={dualAxis ? 'right' : 'left'}
+              orientation="right"
               hide={!showGgr}
               stroke={axis}
-              width={48}
+              width={showGgr ? 48 : 0}
               tick={{ fill: axis, fontSize: 10 }}
               axisLine={false}
               tickLine={false}
